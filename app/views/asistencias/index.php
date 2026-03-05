@@ -120,6 +120,70 @@ button{
 button:hover{
     background:#1d4ed8;
 }
+
+/* =========================
+   estado
+========================= */
+
+/* rojo */
+.estado-faltas { 
+    background:#f87171; 
+    color:white; 
+    font-weight:bold; 
+}   
+
+/* verde */
+.estado-puntualidad { 
+    background:#4ade80; 
+    color:white; 
+    font-weight:bold; 
+} 
+
+/* rosa */
+.estado-incapacidad { 
+    background:#FFB6C1; 
+    color:black; 
+    font-weight:bold; 
+} 
+
+/* amarrillo */
+.estado-vacaciones { 
+    background:#facc15; 
+    color:white; 
+    font-weight:bold; 
+} 
+
+/*naranja*/
+.estado-permiso { 
+    background:#FFA500; 
+    color:white; 
+    font-weight:bold; 
+} 
+
+/* morado */
+.estado-festivo{
+    background:#BCB8C9; 
+    color:white; 
+    font-weight:bold; 
+
+}
+
+/* azul */
+.estado-descanso{
+    background:#87CEFA; 
+    color:white; 
+    font-weight:bold; 
+
+}
+
+
+/* camello */
+.estado-retardo{
+    background:#C19A6B; 
+    color:white; 
+    font-weight:bold; 
+
+}
 </style>
 
 </head>
@@ -152,6 +216,21 @@ while($s = $sucursales->fetch_assoc()):
     🔍 <input type="text" id="buscador" placeholder="Buscar empleado..." onkeyup="buscarEmpleado()">
 </div>
 
+<!-- Filtro de Estado (arriba de la tabla) -->
+<select id="filtroEstado" onchange="filtrarEstado()">
+  <option value="todas">Todas</option>
+  <option value="puntual">Puntual</option>
+  <option value="retardo">Retardo</option>
+  <option value="fuera_de_rango">Fuera_de_rango</option>
+  <option value="falta">Falta</option>
+  <option value="descanso">Descanso</option>
+  <option value="incapacidad">Incapacidad</option>
+  <option value="vacaciones">Vacaciones</option>
+  <option value="permiso">Permiso</option>
+  <option value="festivo">Festivo</option>
+
+</select>
+
 <table id="tablaAsistencias">
 <tr>
     <th>Empleado</th>
@@ -165,7 +244,48 @@ while($s = $sucursales->fetch_assoc()):
 </tr>
 
 <?php if(isset($result) && $result->num_rows > 0): ?>
-<?php while($row = $result->fetch_assoc()): ?>
+<?php
+// Lista de festivos fijos
+$festivos_fijos = ["01-01","02-02","05-01","09-16","11-16","12-25"];
+
+function natalicioBenitoJuarez($year){
+    $fecha = new DateTime("$year-03-01");
+    $lunes = 0;
+    while($lunes < 3){
+        if($fecha->format("N") == 1){ $lunes++; }
+        if($lunes < 3){ $fecha->modify("+1 day"); }
+    }
+    return $fecha->format("Y-m-d");
+}
+?>
+<?php while($row = $result->fetch_assoc()): 
+$fecha_asistencia = $row["fecha"];
+$anio = date("Y", strtotime($fecha_asistencia));
+$mes_dia = date("m-d", strtotime($fecha_asistencia));
+
+$es_festivo = in_array($mes_dia, $festivos_fijos) 
+              || $fecha_asistencia == natalicioBenitoJuarez($anio);
+
+if($es_festivo){
+    $estado = "festivo";
+} else {
+    $estado = strtolower(trim($row["estado"]));
+}
+
+// Asignamos la clase CSS según el estado
+switch($estado){
+    case "puntual":     $claseEstado = "estado-puntualidad"; break;
+    case "retardo":     $claseEstado = "estado-retardo"; break;
+    case "fuera_de_rango": $claseEstado = "estado-incapacidad"; break;
+    case "vacaciones":  $claseEstado = "estado-vacaciones"; break;
+    case "incapacidad": $claseEstado = "estado-incapacidad"; break;
+    case "permiso":     $claseEstado = "estado-permiso"; break;
+    case "festivo":     $claseEstado = "estado-festivo"; break;
+    case "descanso":    $claseEstado = "estado-descanso"; break;
+    case "falta":       $claseEstado = "estado-faltas"; break;
+    default:            $claseEstado = ""; break;
+}
+?>
 
 <?php
 $horas_trabajadas = "";
@@ -183,22 +303,21 @@ if ($row["hora_salida"]) {
     <td><?php echo date("d/m/Y", strtotime($row["fecha"])); ?></td>
     <td><?php echo $row["hora_entrada"] ? date("H:i:s", strtotime($row["hora_entrada"])) : "—"; ?></td>
     <td><?php echo $row["hora_salida"] ? date("H:i:s", strtotime($row["hora_salida"])) : "—"; ?></td>
-    <td><?php echo ucfirst($row["estado"]); ?></td>
+    <!-- Aquí solo una vez el td con clase -->
+    <td class="<?php echo $claseEstado; ?>">
+        <?php echo ucfirst($row["estado"]); ?>
+    </td>
     <td><?php echo $horas_trabajadas ?: "Pendiente"; ?></td>
     <td>
-<td>
-    <?php if (!empty($row["foto"])): ?>
-        <a href="/control-asistencias/public/uploads/<?php echo htmlspecialchars($row["foto"]); ?>" target="_blank">
-            <img src="/control-asistencias/public/uploads/<?php echo htmlspecialchars($row["foto"]); ?>" width="60">
-        </a>
-    <?php else: ?>
-        —
-    <?php endif; ?>
-</td>
-
+        <?php if (!empty($row["foto"])): ?>
+            <a href="/control-asistencias/public/uploads/<?php echo htmlspecialchars($row["foto"]); ?>" target="_blank">
+                <img src="/control-asistencias/public/uploads/<?php echo htmlspecialchars($row["foto"]); ?>" width="60">
+            </a>
+        <?php else: ?>
+            —
+        <?php endif; ?>
     </td>
 </tr>
-
 <?php endwhile; ?>
 <?php else: ?>
 <tr>
@@ -213,28 +332,46 @@ if ($row["hora_salida"]) {
 
 <form method="POST" action="?url=asistencias/registrar">
 
-<label>Empleado:</label>
-<select name="empleado_id" required>
-<?php
-$empleados = $conn->query("SELECT * FROM empleados WHERE activo = 1");
-while($e = $empleados->fetch_assoc()):
-?>
-<option value="<?php echo $e["id"]; ?>">
-    <?php echo $e["nombre"]; ?>
-</option>
-<?php endwhile; ?>
+  <!-- Selección de empleado -->
+  <label>Empleado:</label>
+  <select name="empleado_id" required>
+    <?php
+    $empleados = $conn->query("SELECT * FROM empleados WHERE activo = 1");
+    while($e = $empleados->fetch_assoc()):
+    ?>
+      <option value="<?php echo $e["id"]; ?>">
+        <?php echo $e["nombre"]; ?>
+      </option>
+    <?php endwhile; ?>
+  </select>
+
+  <!-- Tipo de registro -->
+  <label>Tipo:</label>
+  <select name="tipo" required>
+    <option value="entrada">Entrada</option>
+    <option value="salida">Salida</option>
+  </select>
+
+  
+<!-- Estado de asistencia en el formulario -->
+<label>Estado:</label>
+<select name="estado" required>
+  <option value="puntual">Puntual</option>
+  <option value="retardo">Retardo</option>
+  <option value="fuera_de_rango">Fuera_de_rango</option>
+  <option value="falta">Falta</option>
+  <option value="descanso">Descanso</option>
+  <option value="incapacidad">Incapacidad</option>
+  <option value="vacaciones">Vacaciones</option>
+  <option value="permiso">Permiso</option>
 </select>
 
-<label>Tipo:</label>
-<select name="tipo" required>
-<option value="entrada">Entrada</option>
-<option value="salida">Salida</option>
-</select>
+  <!-- Geolocalización -->
+  <input type="hidden" name="latitud" id="latitud">
+  <input type="hidden" name="longitud" id="longitud">
 
-<input type="hidden" name="latitud" id="latitud">
-<input type="hidden" name="longitud" id="longitud">
-
-<button type="submit">Registrar</button>
+  <!-- Botón -->
+  <button type="submit">Registrar</button>
 
 </form>
 
@@ -242,34 +379,50 @@ while($e = $empleados->fetch_assoc()):
 <a href="?url=dashboard">⬅ Volver al Dashboard</a>
 
 <script>
-function filtrarSucursal(nombre){
+function aplicarFiltros(){
+    let filtroSucursal = window.sucursalActiva || "todas";
+    let filtroTexto = document.getElementById("buscador").value.toLowerCase().trim();
+    let filtroEstado = document.getElementById("filtroEstado").value.toLowerCase().trim();
+
     let filas = document.querySelectorAll("#tablaAsistencias tr[data-sucursal]");
-    filas.forEach(fila=>{
-        if(nombre === "todas"){
+
+    filas.forEach(fila => {
+
+        let sucursal = fila.dataset.sucursal;
+        let nombre = fila.children[0].textContent.toLowerCase().trim();
+        let estado = fila.children[5].textContent.toLowerCase().trim();
+
+        let coincideSucursal = (filtroSucursal === "todas" || sucursal === filtroSucursal);
+        let coincideNombre = nombre.includes(filtroTexto);
+        let coincideEstado = (filtroEstado === "todas" || estado === filtroEstado);
+
+        if(coincideSucursal && coincideNombre && coincideEstado){
             fila.style.display = "";
         }else{
-            fila.style.display = fila.dataset.sucursal === nombre ? "" : "none";
+            fila.style.display = "none";
         }
+
     });
 }
 
+// Guardamos sucursal activa
+function filtrarSucursal(nombre){
+    window.sucursalActiva = nombre;
+    aplicarFiltros();
+}
+
+// Buscador
 function buscarEmpleado(){
-    let input = document.getElementById("buscador").value.toLowerCase();
-    let filas = document.querySelectorAll("#tablaAsistencias tr[data-sucursal]");
-
-    filas.forEach(fila=>{
-        let nombre = fila.children[0].textContent.toLowerCase();
-        fila.style.display = nombre.includes(input) ? "" : "none";
-    });
+    aplicarFiltros();
 }
 
-if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(function(position) {
-        document.getElementById("latitud").value = position.coords.latitude;
-        document.getElementById("longitud").value = position.coords.longitude;
-    });
+// Estado
+function filtrarEstado(){
+    aplicarFiltros();
 }
 </script>
+
+
 
 </body>
 </html>

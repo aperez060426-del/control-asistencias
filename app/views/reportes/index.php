@@ -3,6 +3,7 @@
 <head>
     <title>Reportes</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
     <style>
     body{
@@ -130,9 +131,15 @@
         font-weight:600;
     }
 
-    .puntual{ background:#dcfce7; color:#166534; }
-    .retardo{ background:#fef9c3; color:#854d0e; }
-    .fuera{ background:#fee2e2; color:#991b1b; }
+    .puntual{ background: #dcfce7; color: #166534; }
+    .retardo{ background:burlywood; color: #854d0e; }
+    .fuera{ background: #fee2e2; color: #991b1b; }
+    .vacaciones{ background: #f0d980; color:white; }
+    .incapacidad{ background: #FFB6C1; color:black; }
+    .permiso{background: #fdbe47 ; color:black}
+    .festivos{background: #BCB8C9; color:black}
+    .descanso{background:lightblue; color: black;}
+    .faltas{background: #fd4d4d; color: black;}
 
     a{
         text-decoration:none;
@@ -166,6 +173,23 @@
     <button type="submit">Generar Reporte</button>
 </form>
 
+<?php
+// Lista de festivos fijos
+$festivos_fijos = ["01-01","05-01","16-09","25-12"];
+
+if(!function_exists("natalicioBenitoJuarez")){
+    function natalicioBenitoJuarez($year){
+        $fecha = new DateTime("$year-03-01");
+        $lunes = 0;
+        while($lunes < 3){
+            if($fecha->format("N") == 1){ $lunes++; }
+            if($lunes < 3){ $fecha->modify("+1 day"); }
+        }
+        return $fecha->format("Y-m-d");
+    }
+}
+?>
+
 <?php if($result): ?>
 
 <div class="cards">
@@ -189,10 +213,19 @@
         <p><?php echo $totales["fuera_de_rango"]; ?></p>
     </div>
 
+        <div class="card">
+        <h4>Permisos</h4>
+        <p><?php echo $totales["permisos"]; ?></p>
+    </div>
+
     <div class="card">
         <h4>Total Horas</h4>
         <p><?php echo number_format($totales["horas"], 2); ?></p>
     </div>
+
+
+
+    
 </div>
 
 <div class="grafica-container">
@@ -230,36 +263,164 @@ new Chart(ctx, {
 });
 </script>
 
+<script>
+function exportarExcel(){
+
+    var tabla = document.getElementById("tablaReporte");
+
+    if(!tabla){
+        alert("No se encontró la tabla para exportar");
+        return;
+    }
+
+    var wb = XLSX.utils.book_new();
+    var ws = XLSX.utils.table_to_sheet(tabla);
+
+    const rango = XLSX.utils.decode_range(ws['!ref']);
+
+    for(let R = rango.s.r+1; R <= rango.e.r; ++R){
+
+        let celdaEstado = ws[XLSX.utils.encode_cell({r:R, c:4})];
+
+        if(!celdaEstado || !celdaEstado.v) continue;
+
+        let valor = celdaEstado.v.toString().toLowerCase().trim();
+
+        let estilo = {
+            font:{ bold:true },
+            alignment:{ horizontal:"center", vertical:"center" }
+        };
+
+        switch(true){
+            case valor.includes("puntual"):
+                estilo.fill = { patternType:"solid", fgColor:{ rgb:"DCFCE7" }};
+                estilo.font.color = { rgb:"166534" };
+                break;
+
+            case valor.includes("retardo"):
+                estilo.fill = { patternType:"solid", fgColor:{ rgb:"DEB887" }}; // burlywood
+                estilo.font.color = { rgb:"854D0E" };
+                break;
+
+            case valor.includes("fuera"):
+            case valor.includes("falta"):
+                estilo.fill = { patternType:"solid", fgColor:{ rgb:"FEE2E2" }};
+                estilo.font.color = { rgb:"991B1B" };
+                break;
+
+            case valor.includes("vacaciones"):
+                estilo.fill = { patternType:"solid", fgColor:{ rgb:"F0D980" }};
+                estilo.font.color = { rgb:"FFFFFF" };
+                break;
+
+            case valor.includes("incapacidad"):
+                estilo.fill = { patternType:"solid", fgColor:{ rgb:"FFB6C1" }};
+                estilo.font.color = { rgb:"000000" };
+                break;
+
+            case valor.includes("permiso"):
+                estilo.fill = { patternType:"solid", fgColor:{ rgb:"FDBE47" }};
+                estilo.font.color = { rgb:"000000" };
+                break;
+
+            case valor.includes("festivo"):
+                estilo.fill = { patternType:"solid", fgColor:{ rgb:"BCB8C9" }};
+                estilo.font.color = { rgb:"000000" };
+                break;
+
+            case valor.includes("descanso"):
+                estilo.fill = { patternType:"solid", fgColor:{ rgb:"ADD8E6" }}; // lightblue
+                estilo.font.color = { rgb:"000000" };
+                break;
+        }
+
+        celdaEstado.s = estilo;
+    }
+
+    XLSX.utils.book_append_sheet(wb, ws, "Reporte");
+    XLSX.writeFile(wb, "Reporte_Asistencias.xlsx");
+}
+</script>
+
 <h3 style="margin-top:30px;">Detalle</h3>
 
-<table>
+<table id="tablaReporte">
     <tr>
         <th>Empleado</th>
         <th>Fecha</th>
         <th>Entrada</th>
         <th>Salida</th>
+        <th>Horas Extra</th>
         <th>Estado</th>
+        
     </tr>
 
     <?php while($row = $result->fetch_assoc()): ?>
+        <?php
+        $fecha_asistencia = $row["fecha"];
+        $anio = date("Y", strtotime($fecha_asistencia));
+        $mes_dia = date("m-d", strtotime($fecha_asistencia));
+
+        $es_festivo = in_array($mes_dia, $festivos_fijos) 
+                    || $fecha_asistencia == natalicioBenitoJuarez($anio);
+
+        if($es_festivo){
+            $estado = "festivo";
+        } else {
+            $estado = strtolower(trim($row["estado"]));
+        }
+
+        switch($estado){
+            case "puntual":     $clase = "puntual"; break;
+            case "retardo":     $clase = "retardo"; break;
+            case "fuera_de_rango": $clase = "fuera"; break;
+            case "vacaciones":  $clase = "vacaciones"; break;
+            case "incapacidad": $clase = "incapacidad"; break;
+            case "permiso":     $clase = "permiso"; break;
+            case "festivo":     $clase = "festivos"; break;
+            case "descanso":    $clase = "descanso"; break;
+            case "falta":       $clase = "faltas"; break;
+            default:            $clase = "fuera"; break;
+        }
+        ?>
+
+        <?php
+        $horaEntrada = $row["hora_entrada"] ? strtotime($row["hora_entrada"]) : 0;
+        $horaSalida  = $row["hora_salida"] ? strtotime($row["hora_salida"]) : 0;
+        $horasJornada = 8 * 3600; // 8 horas en segundos, ajusta si tu jornada es distinta
+        $horasTrabajadas = max(0, $horaSalida - $horaEntrada);
+        $horasExtra = max(0, $horasTrabajadas - $horasJornada);
+?>
+
     <tr>
         <td><?php echo $row["empleado_nombre"]; ?></td>
         <td><?php echo $row["fecha"]; ?></td>
-        <td><?php echo $row["hora_entrada"]; ?></td>
-        <td><?php echo $row["hora_salida"] ?? "—"; ?></td>
+        <td><?php echo $row["hora_entrada"] ? date("H:i:s", strtotime($row["hora_entrada"])) : "—"; ?></td>
+        <td><?php echo $row["hora_salida"] ? date("H:i:s", strtotime($row["hora_salida"])) : "—"; ?></td>
+        <td><?php echo $horasExtra > 0 ? gmdate("H:i:s", $horasExtra) : "00:00:00"; ?></td>
         <td>
             <?php
-                $estado = $row["estado"];
-                $clase = $estado == "puntual" ? "puntual" :
-                         ($estado == "retardo" ? "retardo" : "fuera");
+            $estado = strtolower(trim($row["estado"]));
+            switch($estado){
+                case "puntual": $clase="puntual"; break;
+                case "retardo": $clase="retardo"; break;
+                case "fuera_de_rango":
+                case "falta": $clase="fuera"; break;
+                case "vacaciones": $clase="vacaciones"; break;
+                case "incapacidad":
+                case "descanso": $clase="incapacidad"; break;
+                default: $clase="fuera";
+            }
             ?>
             <span class="estado <?php echo $clase; ?>">
-                <?php echo ucfirst($estado); ?>
+                <?php echo ucfirst($row["estado"]); ?>
             </span>
         </td>
     </tr>
     <?php endwhile; ?>
 </table>
+
+<button onclick="exportarExcel()">📊 Exportar a Excel</button>
 
 <?php endif; ?>
 
