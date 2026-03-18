@@ -32,6 +32,7 @@ class SucursalesController {
 
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
+            $marca = $_POST["marca"];       
             $nombre = $_POST["nombre"];
             $direccion = $_POST["direccion"];
             $latitud = $_POST["latitud"];
@@ -41,15 +42,80 @@ class SucursalesController {
 
             $stmt = $this->conn->prepare("
                 INSERT INTO sucursales 
-                (empresa_id, nombre, direccion, latitud, longitud, radio_metros, tolerancia_minutos)
-                VALUES (1, ?, ?, ?, ?, ?, ?)
+                (empresa_id, marca, nombre, direccion, latitud, longitud, radio_metros, tolerancia_minutos)
+                VALUES (1, ?, ?, ?, ?, ?, ?, ?)
             ");
 
-            $stmt->bind_param("ssddii", $nombre, $direccion, $latitud, $longitud, $radio, $tolerancia);
+            $stmt->bind_param("sssddii", $marca, $nombre, $direccion, $latitud, $longitud, $radio, $tolerancia);
             $stmt->execute();
 
             header("Location: ?url=sucursales");
             exit();
         }
     }
+
+    /* ===============================
+       EDITAR SUCURSAL
+    =============================== */
+
+    public function editar(){
+
+        $id = $_GET["id"];
+
+        $stmt = $this->conn->prepare("SELECT * FROM sucursales WHERE id = ?");
+        $stmt->bind_param("i",$id);
+        $stmt->execute();
+
+        $result = $stmt->get_result();
+        $sucursal = $result->fetch_assoc();
+
+        require_once "../app/views/sucursales/editar.php";
+    }
+
+    /* ===============================
+       ACTUALIZAR SUCURSAL
+    =============================== */
+
+    public function actualizar(){
+
+        if($_SERVER["REQUEST_METHOD"] == "POST"){
+
+            $id = $_POST["id"];
+            $nombre = $_POST["nombre"];
+            $direccion = $_POST["direccion"];
+            $latitud = $_POST["latitud"];
+            $longitud = $_POST["longitud"];
+            $radio = $_POST["radio"];
+            $tolerancia = $_POST["tolerancia"];
+
+            $stmt = $this->conn->prepare("
+                UPDATE sucursales 
+                SET nombre=?, direccion=?, latitud=?, longitud=?, radio_metros=?, tolerancia_minutos=?
+                WHERE id=?
+            ");
+
+            $stmt->bind_param("ssddiii",$nombre,$direccion,$latitud,$longitud,$radio,$tolerancia,$id);
+            $stmt->execute();
+
+            header("Location: ?url=sucursales");
+            exit();
+        }
+    }
+
+    /* ===============================
+       ELIMINAR SUCURSAL
+    =============================== */
+
+    public function eliminar(){
+
+        $id = $_GET["id"];
+
+        $stmt = $this->conn->prepare("DELETE FROM sucursales WHERE id = ?");
+        $stmt->bind_param("i",$id);
+        $stmt->execute();
+
+        header("Location: ?url=sucursales");
+        exit();
+    }
+
 }

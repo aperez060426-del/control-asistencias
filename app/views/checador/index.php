@@ -10,12 +10,23 @@
 <style>
 body{
 height:100vh;
-background: linear-gradient(135deg,#6a11cb,#2575fc);
+background: linear-gradient(135deg, #aee1ff, #2575fc);
 display:flex;
 align-items:center;
+flex-direction:column;
 justify-content:center;
 font-family: 'Poppins', sans-serif;
 }
+
+.header {
+    text-align: center;
+    margin-bottom: 20px;         /* Espacio entre el logo y la caja de login */
+}
+
+.header img {
+    width: 240px;
+}
+
 
 .card-app{
 background: rgba(255,255,255,0.95);
@@ -96,6 +107,18 @@ display:none;
 
 <body>
 
+<div class="header">
+    <img src="imagen/Grupo-Plaza-2024-blanca.png" alt="Logo Grupo Plaza">
+</div>
+
+<?php
+
+if (isset($_SESSION["flash_mensaje"])) {
+    $mensaje = $_SESSION["flash_mensaje"];
+    unset($_SESSION["flash_mensaje"]);
+    unset($_SESSION["flash_tipo"]);
+}
+?>
 <div class="col-md-4">
 <div class="card-app">
 
@@ -106,11 +129,8 @@ display:none;
 <div class="reloj" id="reloj"></div>
 </div>
 
-<form method="POST" action="?url=checador/registrar" enctype="multipart/form-data" onsubmit="mostrarCheck()">
-
+<form method="POST" action="?url=checador/registrar" enctype="multipart/form-data">
 <input type="text" name="codigo" class="form-control mb-3" placeholder="Código de empleado" required>
-
-<input type="password" name="password" class="form-control mb-3" placeholder="Contraseña" required>
 
 <input type="file" name="foto" id="foto" class="form-control mb-2" accept="image/*" capture="environment">
 
@@ -124,6 +144,7 @@ display:none;
 <button type="submit" name="tipo" value="entrada" class="btn btn-modern btn-entrada">
 <i class="bi bi-box-arrow-in-right"></i> Registrar Entrada
 </button>
+<div id="alerta" class="alert alert-success text-center" style="display:none;"></div>
 
 <button type="submit" name="tipo" value="salida" class="btn btn-modern btn-salida">
 <i class="bi bi-box-arrow-left"></i> Registrar Salida
@@ -137,43 +158,75 @@ display:none;
 </div>
 
 <div class="check-success" id="check">
+<div style="text-align:center;">
 <i class="bi bi-check-circle-fill"></i>
+<div id="mensajeCheck" style="font-size:25px; margin-top:10px;"></div>
+</div>
 </div>
 
 <script>
-// Reloj en vivo
-function actualizarReloj(){
-const ahora=new Date();
-document.getElementById("reloj").innerText=ahora.toLocaleTimeString();
-}
-setInterval(actualizarReloj,1000);
-actualizarReloj();
+let mensajeBackend = "<?php echo $mensaje ?? ''; ?>";
 
-// Preview imagen
-document.getElementById("foto").addEventListener("change",function(e){
-const reader=new FileReader();
-reader.onload=function(){
-const preview=document.getElementById("preview");
-preview.src=reader.result;
-preview.style.display="block";
-}
-reader.readAsDataURL(e.target.files[0]);
-});
+window.onload = function(){
 
-// GPS
-if(navigator.geolocation){
-navigator.geolocation.getCurrentPosition(function(pos){
-document.getElementById("latitud").value=pos.coords.latitude;
-document.getElementById("longitud").value=pos.coords.longitude;
-});
+  // ⏰ reloj
+  function actualizarReloj(){
+    const ahora=new Date();
+    document.getElementById("reloj").innerText=ahora.toLocaleTimeString();
+  }
+  setInterval(actualizarReloj,1000);
+  actualizarReloj();
+
+  // 📷 preview
+  document.getElementById("foto").addEventListener("change",function(e){
+    const reader=new FileReader();
+    reader.onload=function(){
+      const preview=document.getElementById("preview");
+      preview.src=reader.result;
+      preview.style.display="block";
+    }
+    reader.readAsDataURL(e.target.files[0]);
+  });
+
+  // 📍 GPS
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(
+      function(pos){
+        document.getElementById("latitud").value = pos.coords.latitude;
+        document.getElementById("longitud").value = pos.coords.longitude;
+      },
+      function(){
+        alert("Activa la ubicación para poder registrar asistencia");
+      }
+    );
+  }
+
+  // 🔥 MENSAJE DEL BACKEND
+// 🔥 MENSAJE BONITO CON HORA
+if(mensajeBackend !== ""){
+
+  const ahora = new Date();
+  const hora = ahora.toLocaleTimeString();
+
+  const mensajeFinal = mensajeBackend + " a las " + hora;
+
+  const check = document.getElementById("check");
+  const mensaje = document.getElementById("mensajeCheck");
+
+  mensaje.innerText = mensajeFinal;
+
+  check.style.display = "flex";
+
+  // Ocultar después de 3 segundos
+  setTimeout(() => {
+    check.style.display = "none";
+  }, 3000);
 }
 
-// Check animación
-function mostrarCheck(){
-document.getElementById("check").style.display="flex";
-setTimeout(()=>{document.getElementById("check").style.display="none";},1000);
 }
+
+
+
 </script>
-
 </body>
 </html>

@@ -67,44 +67,85 @@ h2{
 /* TABLA */
 table{
     width:100%;
-    border-collapse:separate;
-    border-spacing:0;
+    border-collapse:collapse;
     background:white;
-    border:1px solid #dcdfe4;
     box-shadow:0 10px 25px rgba(0,0,0,0.08);
     border-radius:10px;
     overflow:hidden;
 }
 
-table th{
+thead{
     background:#1e293b;
     color:white;
-    padding:14px;
-    text-align:left;
+}
+
+th, td{
+    padding:12px;
+    text-align:center;
+    border-bottom:1px solid #e5e7eb;
     font-size:14px;
 }
 
-table td{
-    padding:14px;
-    border-top:1px solid #e5e7eb;
-    font-size:14px;
-}
-
-table tr:nth-child(even){
+tbody tr:nth-child(even){
     background:#f9fafb;
 }
 
-table tr:hover{
+tbody tr:hover{
     background:#eef2ff;
 }
 
-.badge-dia{
-    background:#e0e7ff;
+/* BADGES */
+.badge-hora{
+    background:#22c55e;
+    color:white;
     padding:4px 8px;
     border-radius:6px;
     font-size:12px;
     font-weight:600;
 }
+
+.badge-vacio{
+    color:#9ca3af;
+}
+
+.badge-vacaciones{
+    background:#c084fc; /* lila */
+    color:white;
+    padding:4px 8px;
+    border-radius:6px;
+    font-size:12px;
+    font-weight:600;
+}
+
+.badge-descanso{
+    background:#1d4ed8; /*azul*/
+    color:white; 
+    font-weight:white; 
+    padding:4px 8px;
+    border-radius:6px;
+    font-size:12px;
+    font-weight:600;
+
+}
+
+.badge-incapacidad{
+    background:#facc15; /* amarillo */
+    color:#000;
+    padding:4px 8px;
+    border-radius:6px;
+    font-size:12px;
+    font-weight:600;
+}
+
+.badge-falta{
+    background:#ef4444; /* rojo */
+    color:white;
+    padding:4px 8px;
+    border-radius:6px;
+    font-size:12px;
+    font-weight:600;
+}
+
 </style>
 </head>
 <body>
@@ -112,27 +153,18 @@ table tr:hover{
 <h2>Listado de Horarios</h2>
 
 <a class="btn" href="?url=horarios/crear">
- Asignar Nuevo Horario
+Asignar Nuevo Horario
 </a>
-
-<?php
-require_once "../config/Database.php";
-$db = new Database();
-$conn = $db->connect();
-$empleados = $conn->query("SELECT DISTINCT e.id, e.nombre 
-                           FROM empleados e
-                           INNER JOIN horarios h ON e.id = h.empleado_id
-                           WHERE e.activo = 1
-                           ORDER BY e.nombre");
-?>
 
 <!-- TARJETAS EMPLEADOS -->
 <div class="empleados-container">
-<?php while($e = $empleados->fetch_assoc()): ?>
-<div class="empleado-card" onclick="filtrarEmpleado('<?php echo $e['nombre']; ?>')">
-👤 <?php echo $e["nombre"]; ?>
+<?php if(!empty($empleados)): ?>
+<?php foreach($empleados as $id => $emp): ?>
+<div class="empleado-card" onclick="filtrarEmpleado('<?php echo $emp['nombre']; ?>')">
+👤 <?php echo $emp["nombre"]; ?>
 </div>
-<?php endwhile; ?>
+<?php endforeach; ?>
+<?php endif; ?>
 
 <div class="empleado-card" onclick="filtrarEmpleado('todos')">
 🔄 Todos
@@ -145,26 +177,93 @@ $empleados = $conn->query("SELECT DISTINCT e.id, e.nombre
 </div>
 
 <table id="tablaHorarios">
+<thead>
 <tr>
 <th>Empleado</th>
-<th>Horario Semanal</th>
+<th>Lunes</th>
+<th>Martes</th>
+<th>Miércoles</th>
+<th>Jueves</th>
+<th>Viernes</th>
+<th>Sábado</th>
+<th>Domingo</th>
+<th>Acciones</th>
 </tr>
+</thead>
+<tbody>
 
-<?php while($row = $result->fetch_assoc()): ?>
-<tr data-empleado="<?php echo $row["nombre"]; ?>">
-<td><?php echo $row["nombre"]; ?></td>
+<?php
+$dias = ["lunes","martes","miercoles","jueves","viernes","sabado","domingo"];
+if(!empty($empleados)):
+foreach($empleados as $id => $emp): ?>
+
+<tr data-empleado="<?php echo $emp["nombre"]; ?>">
+<td><strong><?php echo $emp["nombre"]; ?></strong></td>
+
+<?php foreach($dias as $dia): ?>
 <td>
-<?php 
-if($row["horario_semanal"]){
-    echo $row["horario_semanal"];
-}else{
-    echo "Sin horario asignado";
-}
-?>
-</td>
-</tr>
-<?php endwhile; ?>
+<?php
 
+    if (isset($emp["horarios"]) && isset($emp["horarios"][$dia])) {
+
+        $h = $emp["horarios"][$dia];
+
+        $descanso = isset($h["descanso"]) ? (int)$h["descanso"] : 0;
+
+      
+
+        // 🔹 Si es algún tipo de descanso
+        if ($descanso > 0) {
+
+            switch ($descanso) {
+                case 1:
+                    echo '<span class="badge-descanso">Descanso</span>';
+                    break;
+                case 2:
+                    echo '<span class="badge-vacaciones">Vacaciones</span>';
+                    break;
+                case 3:
+                    echo '<span class="badge-incapacidad">Incapacidad</span>';
+                    break;
+                case 4:
+                    echo '<span class="badge-falta">Permisos</span>';
+                    break;
+            }
+
+        } 
+        // 🔹 Si NO es descanso pero tiene horas
+        elseif (!empty($h["hora_entrada"]) && !empty($h["hora_salida"])) {
+
+            echo '<span class="badge-hora">'
+                . htmlspecialchars($h["hora_entrada"])
+                . ' - '
+                . htmlspecialchars($h["hora_salida"])
+                . '</span>';
+
+        } 
+        // 🔹 Si existe registro pero no tiene horas
+        else {
+            echo '<span class="badge-vacio">Sin horario</span>';
+        }
+
+    } else {
+        echo '<span class="badge-vacio">Sin horario</span>';
+    }
+    ?>
+</td>
+
+<?php endforeach; ?>
+    <td>
+        <a class="btn" href="?url=horarios/editar&id=<?php echo $id; ?>">
+            ✏️ Editar
+        </a>
+    </td>
+
+</tr>
+<?php endforeach; ?>
+<?php endif; ?>
+
+</tbody>
 </table>
 
 <br>
@@ -172,7 +271,7 @@ if($row["horario_semanal"]){
 
 <script>
 function filtrarEmpleado(nombre){
-let filas = document.querySelectorAll("#tablaHorarios tr[data-empleado]");
+let filas = document.querySelectorAll("#tablaHorarios tbody tr");
 filas.forEach(fila=>{
 if(nombre === "todos"){
 fila.style.display = "";
@@ -184,7 +283,7 @@ fila.style.display = fila.dataset.empleado === nombre ? "" : "none";
 
 function buscarEmpleado(){
 let input = document.getElementById("buscador").value.toLowerCase();
-let filas = document.querySelectorAll("#tablaHorarios tr[data-empleado]");
+let filas = document.querySelectorAll("#tablaHorarios tbody tr");
 filas.forEach(fila=>{
 let nombre = fila.children[0].textContent.toLowerCase();
 fila.style.display = nombre.includes(input) ? "" : "none";

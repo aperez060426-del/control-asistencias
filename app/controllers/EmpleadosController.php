@@ -8,6 +8,9 @@ class EmpleadosController {
 
     public function __construct() {
 
+        if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
         if (!isset($_SESSION["usuario"])) {
             header("Location: /control-asistencias/public/");
             exit();
@@ -18,12 +21,12 @@ class EmpleadosController {
     }
 
     public function index() {
-
-        $query = "
-            SELECT e.*, s.nombre AS sucursal_nombre
-            FROM empleados e
-            INNER JOIN sucursales s ON e.sucursal_id = s.id
-        ";
+            $query = "
+                SELECT e.*, s.nombre AS sucursal_nombre
+                FROM empleados e
+                INNER JOIN sucursales s ON e.sucursal_id = s.id
+                WHERE e.activo = 1
+            ";
 
         $result = $this->conn->query($query);
 
@@ -74,6 +77,23 @@ class EmpleadosController {
         require_once "../app/views/empleados/editar.php";
     }
 
+
+    public function eliminar($id) {
+
+    $stmt = $this->conn->prepare("
+        UPDATE empleados SET activo = 0 WHERE id = ?
+    ");
+
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+
+    header("Location: ?url=empleados");
+    exit();
+
+
+    
+}
+
     // 🔹 NUEVO — Actualizar empleado
     public function actualizar() {
 
@@ -108,8 +128,7 @@ class EmpleadosController {
                     WHERE id=?
                 ");
 
-                $stmt->bind_param("ssiiii", $codigo, $nombre, $rol, $sucursal_id, $activo, $id);
-            }
+                        $stmt->bind_param("sssiii", $codigo, $nombre, $rol, $sucursal_id, $activo, $id);            }
 
             $stmt->execute();
 

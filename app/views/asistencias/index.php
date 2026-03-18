@@ -326,54 +326,7 @@ if ($row["hora_salida"]) {
 <?php endif; ?>
 </table>
 
-<br><br>
 
-<h3>Registrar Nueva Asistencia</h3>
-
-<form method="POST" action="?url=asistencias/registrar">
-
-  <!-- Selección de empleado -->
-  <label>Empleado:</label>
-  <select name="empleado_id" required>
-    <?php
-    $empleados = $conn->query("SELECT * FROM empleados WHERE activo = 1");
-    while($e = $empleados->fetch_assoc()):
-    ?>
-      <option value="<?php echo $e["id"]; ?>">
-        <?php echo $e["nombre"]; ?>
-      </option>
-    <?php endwhile; ?>
-  </select>
-
-  <!-- Tipo de registro -->
-  <label>Tipo:</label>
-  <select name="tipo" required>
-    <option value="entrada">Entrada</option>
-    <option value="salida">Salida</option>
-  </select>
-
-  
-<!-- Estado de asistencia en el formulario -->
-<label>Estado:</label>
-<select name="estado" required>
-  <option value="puntual">Puntual</option>
-  <option value="retardo">Retardo</option>
-  <option value="fuera_de_rango">Fuera_de_rango</option>
-  <option value="falta">Falta</option>
-  <option value="descanso">Descanso</option>
-  <option value="incapacidad">Incapacidad</option>
-  <option value="vacaciones">Vacaciones</option>
-  <option value="permiso">Permiso</option>
-</select>
-
-  <!-- Geolocalización -->
-  <input type="hidden" name="latitud" id="latitud">
-  <input type="hidden" name="longitud" id="longitud">
-
-  <!-- Botón -->
-  <button type="submit">Registrar</button>
-
-</form>
 
 <br>
 <a href="?url=dashboard">⬅ Volver al Dashboard</a>

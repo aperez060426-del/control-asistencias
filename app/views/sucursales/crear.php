@@ -28,7 +28,7 @@
         font-size:14px;
     }
 
-    input{
+    input, select{
         width:100%;
         padding:10px;
         margin-top:6px;
@@ -38,7 +38,7 @@
         font-size:14px;
     }
 
-    input:focus{
+    input:focus, select:focus{
         outline:none;
         border-color:#2563eb;
         box-shadow:0 0 0 2px rgba(37,99,235,0.1);
@@ -84,6 +84,22 @@
 <h2>Crear Nueva Sucursal</h2>
 
 <form method="POST" action="?url=sucursales/guardar">
+
+    <label>Marca:</label>
+    <select name="marca" required>
+        <option value="MVP">MVP</option>
+        <option value="MVC">MVC</option>
+        <option value="CPR">CPR</option>
+        <option value="CAFETERIA">CAFETERIA</option>
+        <option value="C3G">C3G</option>
+        <option value="HOTELES">HOTELES</option>
+        <option value="HSC">HSC</option>
+        <option value="ESP">ESP</option>
+        <option value="SANTUARIO">SANTUARIO</option>
+        <option value="ALLORA">ALLORA</option>
+        <option value="CECAP">CECAP</option>
+        <option value="CORPORATIVO">CORPORATIVO</option>
+    </select>
 
     <label>Nombre:</label>
     <input type="text" name="nombre" required>
