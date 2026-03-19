@@ -89,6 +89,7 @@
     <select name="rol" required>
         <option value="empleado">Empleado</option>
         <option value="supervisor">Supervisor</option>
+        <option value="gerente">Gerente</option>
         <option value="admin">Admin</option>
     </select>
 

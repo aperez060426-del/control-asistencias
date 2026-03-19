@@ -91,6 +91,8 @@
     <select name="rol">
         <option value="empleado" <?= $empleado['rol'] == 'empleado' ? 'selected' : ''; ?>>Empleado</option>
         <option value="admin" <?= $empleado['rol'] == 'admin' ? 'selected' : ''; ?>>Admin</option>
+        <option value="supervisor" <?= $empleado['rol'] == 'supervisor' ? 'selected' : ''; ?>>Supervisor</option>
+        <option value="gerente" <?= $empleado['rol'] == 'gerente' ? 'selected' : ''; ?>>Gerente</option>
     </select>
 
     <label>Sucursal:</label>

@@ -9,8 +9,9 @@ class EmpleadosController {
     public function __construct() {
 
         if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+            session_start();
+        }
+
         if (!isset($_SESSION["usuario"])) {
             header("Location: /control-asistencias/public/");
             exit();
@@ -21,12 +22,13 @@ class EmpleadosController {
     }
 
     public function index() {
-            $query = "
-                SELECT e.*, s.nombre AS sucursal_nombre
-                FROM empleados e
-                INNER JOIN sucursales s ON e.sucursal_id = s.id
-                WHERE e.activo = 1
-            ";
+
+        $query = "
+            SELECT e.*, s.nombre AS sucursal_nombre
+            FROM empleados e
+            INNER JOIN sucursales s ON e.sucursal_id = s.id
+            WHERE e.activo = 1
+        ";
 
         $result = $this->conn->query($query);
 
@@ -35,12 +37,26 @@ class EmpleadosController {
 
     public function crear() {
 
+        // 🔒 BLOQUEO
+        if ($_SESSION["usuario"]["rol"] == "supervisor_marca") {
+            echo "<script>
+            alert('No tienes permisos para crear empleados');
+            window.location.href='?url=empleados';
+            </script>";
+            exit();
+        }
+
         $sucursales = $this->conn->query("SELECT * FROM sucursales WHERE activa = 1");
 
         require_once "../app/views/empleados/crear.php";
     }
 
     public function guardar() {
+
+        // 🔒 BLOQUEO
+        if ($_SESSION["usuario"]["rol"] == "supervisor_marca") {
+            exit("Acceso denegado");
+        }
 
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
@@ -64,8 +80,16 @@ class EmpleadosController {
         }
     }
 
-    // 🔹 NUEVO — Editar empleado
     public function editar($id) {
+
+        // 🔒 BLOQUEO
+        if ($_SESSION["usuario"]["rol"] == "supervisor_marca") {
+            echo "<script>
+            alert('No tienes permisos para editar empleados');
+            window.location.href='?url=empleados';
+            </script>";
+            exit();
+        }
 
         $stmt = $this->conn->prepare("SELECT * FROM empleados WHERE id = ?");
         $stmt->bind_param("i", $id);
@@ -77,25 +101,34 @@ class EmpleadosController {
         require_once "../app/views/empleados/editar.php";
     }
 
-
     public function eliminar($id) {
 
-    $stmt = $this->conn->prepare("
-        UPDATE empleados SET activo = 0 WHERE id = ?
-    ");
+        // 🔒 SOLO ADMIN
+        if ($_SESSION["usuario"]["rol"] != "admin") {
+            echo "<script>
+            alert('No tienes permisos para eliminar empleados');
+            window.location.href='?url=empleados';
+            </script>";
+            exit();
+        }
 
-    $stmt->bind_param("i", $id);
-    $stmt->execute();
+        $stmt = $this->conn->prepare("
+            UPDATE empleados SET activo = 0 WHERE id = ?
+        ");
 
-    header("Location: ?url=empleados");
-    exit();
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
 
+        header("Location: ?url=empleados");
+        exit();
+    }
 
-    
-}
-
-    // 🔹 NUEVO — Actualizar empleado
     public function actualizar() {
+
+        // 🔒 BLOQUEO
+        if ($_SESSION["usuario"]["rol"] == "supervisor_marca") {
+            exit("Acceso denegado");
+        }
 
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
@@ -107,7 +140,6 @@ class EmpleadosController {
             $activo = $_POST["activo"];
             $password = $_POST["password"];
 
-            // Si escribe nueva contraseña
             if (!empty($password)) {
 
                 $passwordHash = password_hash($password, PASSWORD_DEFAULT);
@@ -128,7 +160,8 @@ class EmpleadosController {
                     WHERE id=?
                 ");
 
-                        $stmt->bind_param("sssiii", $codigo, $nombre, $rol, $sucursal_id, $activo, $id);            }
+                $stmt->bind_param("sssiii", $codigo, $nombre, $rol, $sucursal_id, $activo, $id);
+            }
 
             $stmt->execute();
 

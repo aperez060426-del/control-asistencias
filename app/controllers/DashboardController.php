@@ -13,9 +13,18 @@ class DashboardController {
         }
 
         if (!isset($_SESSION["usuario"])) {
-            header("Location: /control-asistencias/public/");
-            exit();
+    header("Location: /control-asistencias/public/");
+    exit();
         }
+
+        // 🔥 BLOQUEAR EMPLEADOS
+        if ($_SESSION["usuario"]["rol"] == "empleado") {
+            echo "<script>
+            alert('Acceso denegado: no tienes permisos para entrar al dashboard');
+            window.location.href='/control-asistencias/public/';
+            </script>";
+            exit();
+}
 
         $db = new Database();
         $this->conn = $db->connect();

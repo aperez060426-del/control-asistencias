@@ -145,13 +145,30 @@ if (session_status() === PHP_SESSION_NONE) {
     </div>
 
     <div class="menu-buttons">
+
+    <?php $rol = $_SESSION["usuario"]["rol"]; ?>
+
+    <?php if ($rol != "supervisor_marca"): ?>
         <a href="?url=asistencias">Asistencias</a>
-        <a href="?url=empleados">Empleados</a>
+    <?php endif; ?>
+
+    <!-- ✅ ESTE SIEMPRE VISIBLE -->
+    <a href="?url=empleados">Empleados</a>
+
+    <?php if ($rol != "supervisor_marca"): ?>
         <a class="btn" href="?url=horarios">Horarios</a>
-        <a href="?url=sucursales">Sucursales</a>
+    <?php endif; ?>
+
+    <!-- ✅ ESTE SIEMPRE VISIBLE -->
+    <a href="?url=sucursales">Sucursales</a>
+
+    <?php if ($rol != "supervisor_marca"): ?>
         <a href="?url=reportes">Reportes</a>
-        <a href="?url=auth/logout" class="logout">Cerrar sesión</a>
-    </div>
+    <?php endif; ?>
+
+    <a href="?url=auth/logout" class="logout">Cerrar sesión</a>
+
+</div>
 </div>
 
 </body>

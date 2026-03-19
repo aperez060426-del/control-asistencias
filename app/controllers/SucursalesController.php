@@ -25,10 +25,25 @@ class SucursalesController {
     }
 
     public function crear() {
+
+        // 🔒 BLOQUEO
+        if ($_SESSION["usuario"]["rol"] == "supervisor_marca") {
+            echo "<script>
+            alert('No tienes permisos para crear sucursales');
+            window.location.href='?url=sucursales';
+            </script>";
+            exit();
+        }
+
         require_once "../app/views/sucursales/crear.php";
     }
 
     public function guardar() {
+
+        // 🔒 BLOQUEO
+        if ($_SESSION["usuario"]["rol"] == "supervisor_marca") {
+            exit("Acceso denegado");
+        }
 
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
@@ -60,6 +75,15 @@ class SucursalesController {
 
     public function editar(){
 
+        // 🔒 BLOQUEO
+        if ($_SESSION["usuario"]["rol"] == "supervisor_marca") {
+            echo "<script>
+            alert('No tienes permisos para editar sucursales');
+            window.location.href='?url=sucursales';
+            </script>";
+            exit();
+        }
+
         $id = $_GET["id"];
 
         $stmt = $this->conn->prepare("SELECT * FROM sucursales WHERE id = ?");
@@ -77,6 +101,11 @@ class SucursalesController {
     =============================== */
 
     public function actualizar(){
+
+        // 🔒 BLOQUEO
+        if ($_SESSION["usuario"]["rol"] == "supervisor_marca") {
+            exit("Acceso denegado");
+        }
 
         if($_SERVER["REQUEST_METHOD"] == "POST"){
 
@@ -107,6 +136,15 @@ class SucursalesController {
     =============================== */
 
     public function eliminar(){
+
+        // 🔒 SOLO ADMIN (igual que empleados)
+        if ($_SESSION["usuario"]["rol"] != "admin") {
+            echo "<script>
+            alert('No tienes permisos para eliminar sucursales');
+            window.location.href='?url=sucursales';
+            </script>";
+            exit();
+        }
 
         $id = $_GET["id"];
 
