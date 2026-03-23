@@ -180,29 +180,31 @@ Asignar Nuevo Horario
 </a>
 
 <!-- 🔵 TARJETAS SUCURSALES -->
-<div class="sucursales-container">
-<?php while($s = $sucursales->fetch_assoc()): ?>
-<div class="sucursal-card" onclick="filtrarSucursal('<?php echo $s['nombre']; ?>')">
-📍 <?php echo $s["nombre"]; ?>
-</div>
-<?php endwhile; ?>
+<div class="search-box">
 
-<div class="sucursal-card" onclick="filtrarSucursal('todas')">
-🔄 Todas
-</div>
-</div>
+<input type="text" placeholder="Buscar sucursal..." onkeyup="filtrarSucursalInput(this.value)"><select id="selectSucursal" onchange="filtrarSucursal(this.value)">
+    <option value="todas">🔄 Todas las sucursales</option>
+
+    <?php while($s = $sucursales->fetch_assoc()): ?>
+        <option value="<?php echo $s['nombre']; ?>">
+            <?php echo $s['nombre']; ?>
+        </option>
+    <?php endwhile; ?>
+
+</select>
 
 </div>
 
 <!-- BUSCADOR -->
 <div class="search-box">
-🔍 <input type="text" id="buscador" placeholder="Buscar empleado..." onkeyup="buscarEmpleado()">
+🔍 <input type="text" id="buscador" placeholder="Buscar empleado..." onkeyup="aplicarFiltros()">
 </div>
 
 <table id="tablaHorarios">
 <thead>
 <tr>
 <th>Empleado</th>
+<th>Sucursal</th>
 <th>Lunes</th>
 <th>Martes</th>
 <th>Miércoles</th>
@@ -220,8 +222,9 @@ $dias = ["lunes","martes","miercoles","jueves","viernes","sabado","domingo"];
 if(!empty($empleados)):
 foreach($empleados as $id => $emp): ?>
 
-<tr data-sucursal="<?php echo $emp["sucursal_nombre"]; ?>"><td><strong><?php echo $emp["nombre"]; ?></strong></td>
-
+<tr data-sucursal="<?php echo $emp["sucursal_nombre"]; ?>">
+<td><strong><?php echo $emp["nombre"]; ?></strong></td>
+<td><?php echo $emp["sucursal_nombre"]; ?></td>
 <?php foreach($dias as $dia): ?>
 <td>
 <?php
@@ -292,37 +295,84 @@ foreach($empleados as $id => $emp): ?>
 <a href="?url=dashboard">⬅ Volver al Dashboard</a>
 
 <script>
-function filtrarEmpleado(nombre){
-let filas = document.querySelectorAll("#tablaHorarios tbody tr");
-filas.forEach(fila=>{
-if(nombre === "todos"){
-fila.style.display = "";
-}else{
-fila.style.display = fila.dataset.empleado === nombre ? "" : "none";
-}
-});
+window.sucursalActiva = "todas";
+
+function aplicarFiltros(){
+
+    let filtroSucursal = window.sucursalActiva || "todas";
+    let filtroTexto = document.getElementById("buscador").value.toLowerCase().trim();
+
+    let filas = document.querySelectorAll("#tablaHorarios tbody tr");
+
+    filas.forEach(fila => {
+
+        let sucursal = fila.dataset.sucursal.toLowerCase();
+        let nombre = fila.children[0].textContent.toLowerCase();
+
+        let coincideSucursal = (
+            filtroSucursal === "todas" ||
+            sucursal.includes(filtroSucursal)
+        );
+
+        let coincideNombre = nombre.includes(filtroTexto);
+
+        if(coincideSucursal && coincideNombre){
+            fila.style.display = "";
+        }else{
+            fila.style.display = "none";
+        }
+
+    });
 }
 
+// SELECT
 function filtrarSucursal(nombre){
-let filas = document.querySelectorAll("#tablaHorarios tbody tr");
-
-filas.forEach(fila=>{
-    if(nombre === "todas"){
-        fila.style.display = "";
-    }else{
-        fila.style.display = fila.dataset.sucursal === nombre ? "" : "none";
-    }
-});
+    window.sucursalActiva = nombre.toLowerCase();
+    aplicarFiltros();
 }
 
+// INPUT de sucursal (escribiendo)
+function filtrarSucursalInput(valor){
+    window.sucursalActiva = valor.toLowerCase();
+    aplicarFiltros();
+}
+
+// INPUT de empleados
 function buscarEmpleado(){
-let input = document.getElementById("buscador").value.toLowerCase();
-let filas = document.querySelectorAll("#tablaHorarios tbody tr");
-filas.forEach(fila=>{
-let nombre = fila.children[0].textContent.toLowerCase();
-fila.style.display = nombre.includes(input) ? "" : "none";
-});
+    aplicarFiltros();
 }
+
+// FILTRAR OPCIONES DEL SELECT
+function filtrarSelect(valor){
+    let select = document.getElementById("selectSucursal");
+    let opciones = select.options;
+
+    for(let i = 0; i < opciones.length; i++){
+        let texto = opciones[i].text.toLowerCase();
+
+        if(texto.includes(valor.toLowerCase()) || opciones[i].value === "todas"){
+            opciones[i].style.display = "";
+        }else{
+            opciones[i].style.display = "none";
+        }
+    }
+}
+
+function filtrarSelect(valor){
+let select = document.getElementById("selectSucursal");
+let opciones = select.options;
+
+for(let i = 0; i < opciones.length; i++){
+    let texto = opciones[i].text.toLowerCase();
+
+    if(texto.includes(valor.toLowerCase()) || opciones[i].value === "todas"){
+        opciones[i].style.display = "";
+    }else{
+        opciones[i].style.display = "none";
+    }
+}
+}
+
 </script>
 
 </body>
