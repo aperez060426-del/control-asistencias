@@ -191,25 +191,28 @@ button:hover{
 
 <h2>Registro de Asistencias</h2>
 
-<!-- TARJETAS DE SUCURSALES -->
-<div class="sucursales-container">
-<?php
-require_once "../config/Database.php";
-$db = new Database();
-$conn = $db->connect();
-$sucursales = $conn->query("SELECT * FROM sucursales");
+<div class="search-box" style="display:flex; gap:10px; align-items:center;">
+    
+    🏢 
+    <select onchange="filtrarSucursal(this.value)" style="width:200px;">
+        <option value="todas">🔄 Todas</option>
 
-while($s = $sucursales->fetch_assoc()):
-?>
-<div class="sucursal-card" onclick="filtrarSucursal('<?php echo $s['nombre']; ?>')">
-    📍 <?php echo $s["nombre"]; ?>
-</div>
-<?php endwhile; ?>
+        <?php while($s = $sucursales->fetch_assoc()): ?>
+            <option value="<?php echo $s['nombre']; ?>">
+                <?php echo $s['nombre']; ?>
+            </option>
+        <?php endwhile; ?>
+    </select>
 
-<div class="sucursal-card" onclick="filtrarSucursal('todas')">
-    🔄 Mostrar Todas
+    🔍 
+    <input type="text" 
+           placeholder="Buscar sucursal..." 
+onkeyup="filtrarSucursalInput(this.value)"           style="width:200px;">
+
 </div>
-</div>
+
+
+
 
 <!-- BUSCADOR -->
 <div class="search-box">
@@ -345,8 +348,10 @@ function aplicarFiltros(){
         let nombre = fila.children[0].textContent.toLowerCase().trim();
         let estado = fila.children[5].textContent.toLowerCase().trim();
 
-        let coincideSucursal = (filtroSucursal === "todas" || sucursal === filtroSucursal);
-        let coincideNombre = nombre.includes(filtroTexto);
+let coincideSucursal = (
+    filtroSucursal === "todas" ||
+    sucursal.toLowerCase().includes(filtroSucursal)
+);        let coincideNombre = nombre.includes(filtroTexto);
         let coincideEstado = (filtroEstado === "todas" || estado === filtroEstado);
 
         if(coincideSucursal && coincideNombre && coincideEstado){
@@ -356,6 +361,11 @@ function aplicarFiltros(){
         }
 
     });
+}
+
+function filtrarSucursalInput(valor){
+    window.sucursalActiva = valor.toLowerCase();
+    aplicarFiltros();
 }
 
 // Guardamos sucursal activa
@@ -373,6 +383,9 @@ function buscarEmpleado(){
 function filtrarEstado(){
     aplicarFiltros();
 }
+
+
+
 </script>
 
 

@@ -25,21 +25,22 @@ class HorariosController {
     // 🔹 LISTADO DE HORARIOS
     // ================================
     public function index() {
-
-         $query = "
-          SELECT 
-           e.id,
-           e.nombre,
-           h.dia_semana,
-           h.hora_entrada,
-           h.hora_salida,
-           h.descanso
-            FROM empleados e
-            LEFT JOIN horarios h 
-                ON e.id = h.empleado_id 
-                AND h.activo = 1
-            WHERE e.activo = 1
-            ORDER BY e.nombre
+        $query = "
+        SELECT 
+            e.id,
+            e.nombre,
+            s.nombre AS sucursal_nombre,
+            h.dia_semana,
+            h.hora_entrada,
+            h.hora_salida,
+            h.descanso
+        FROM empleados e
+        INNER JOIN sucursales s ON e.sucursal_id = s.id
+        LEFT JOIN horarios h 
+            ON e.id = h.empleado_id 
+            AND h.activo = 1
+        WHERE e.activo = 1
+        ORDER BY s.nombre, e.nombre
         ";
 
     $result = $this->conn->query($query);
@@ -56,15 +57,18 @@ class HorariosController {
 
         if (!isset($empleados[$id])) {
             $empleados[$id] = [
-                "nombre" => $row["nombre"],
-                "horarios" => []
-            ];
+    "nombre" => $row["nombre"],
+    "sucursal_nombre" => $row["sucursal_nombre"], // 👈 ESTE ES EL IMPORTANTE
+    "horarios" => []
+];
         }
 
         if ($row["dia_semana"]) {
             $empleados[$id]["horarios"][$row["dia_semana"]] = $row;
         }
     }
+
+    $sucursales = $this->conn->query("SELECT * FROM sucursales WHERE activa = 1");
 
     require_once "../app/views/horarios/index.php";
     }
@@ -400,11 +404,26 @@ public function editar() {
     $stmt->execute();
     $result = $stmt->get_result();
 
-    $horarios = [];
-    while($row = $result->fetch_assoc()) {
-        $horarios[$row["dia_semana"]] = $row;
+   $empleados = [];
+
+while($row = $result->fetch_assoc()) {
+
+    $id = $row["id"];
+
+    // Si no existe el empleado, lo creamos
+    if(!isset($empleados[$id])){
+        $empleados[$id] = [
+            "nombre" => $row["nombre"],
+            "sucursal_nombre" => $row["sucursal_nombre"], // 👈 AQUI LA CLAVE
+            "horarios" => []
+        ];
     }
 
+    // Guardamos horarios por día
+    if($row["dia_semana"]){
+        $empleados[$id]["horarios"][$row["dia_semana"]] = $row;
+    }
+}
     // Obtener plantillas
     $plantillas = $this->conn->query("
         SELECT * FROM plantillas_horarios

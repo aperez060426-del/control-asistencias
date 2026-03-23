@@ -32,6 +32,8 @@ class AsistenciasController {
         ";
 
         $result = $this->conn->query($query);
+   
+        $sucursales = $this->conn->query("SELECT * FROM sucursales WHERE activa = 1");
 
         require_once "../app/views/asistencias/index.php";
     }

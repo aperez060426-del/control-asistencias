@@ -46,6 +46,8 @@
     letter-spacing:1px;
 
     font-weight:600;
+    position:relative;   /* necesario para aplicar z-index */
+    z-index:10; 
 
 }   
 
@@ -94,6 +96,8 @@ h2{
     border-radius:8px;
     text-decoration:none;
     margin-bottom:30px;
+    position:relative;   /* necesario para aplicar z-index */
+    z-index:10;  
 }
 
 .btn:hover{
@@ -111,7 +115,7 @@ h2{
 /* TARJETA LOGO */
 
 .marca{
-    background:#111827;
+    background: #1118276e;
     border-radius:14px;
     height:120px;
 
@@ -249,6 +253,8 @@ transform:scale(1.2);
     color:white;
     text-decoration:none;
     font-weight:600;
+    position:relative;   /* necesario para aplicar z-index */
+    z-index:10; 
 }
 
 .volver:hover{

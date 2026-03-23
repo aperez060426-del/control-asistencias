@@ -146,6 +146,29 @@ tbody tr:hover{
     font-weight:600;
 }
 
+/* TARJETAS SUCURSALES */
+.sucursales-container{
+    display:flex;
+    flex-wrap:wrap;
+    gap:15px;
+    margin:20px 0;
+}
+
+.sucursal-card{
+    background:white;
+    padding:12px 20px;
+    border-radius:10px;
+    box-shadow:0 8px 20px rgba(0,0,0,0.05);
+    cursor:pointer;
+    font-weight:600;
+    transition:.2s;
+}
+
+.sucursal-card:hover{
+    background:#2563eb;
+    color:white;
+}
+
 </style>
 </head>
 <body>
@@ -156,19 +179,19 @@ tbody tr:hover{
 Asignar Nuevo Horario
 </a>
 
-<!-- TARJETAS EMPLEADOS -->
-<div class="empleados-container">
-<?php if(!empty($empleados)): ?>
-<?php foreach($empleados as $id => $emp): ?>
-<div class="empleado-card" onclick="filtrarEmpleado('<?php echo $emp['nombre']; ?>')">
-👤 <?php echo $emp["nombre"]; ?>
+<!-- 🔵 TARJETAS SUCURSALES -->
+<div class="sucursales-container">
+<?php while($s = $sucursales->fetch_assoc()): ?>
+<div class="sucursal-card" onclick="filtrarSucursal('<?php echo $s['nombre']; ?>')">
+📍 <?php echo $s["nombre"]; ?>
 </div>
-<?php endforeach; ?>
-<?php endif; ?>
+<?php endwhile; ?>
 
-<div class="empleado-card" onclick="filtrarEmpleado('todos')">
-🔄 Todos
+<div class="sucursal-card" onclick="filtrarSucursal('todas')">
+🔄 Todas
 </div>
+</div>
+
 </div>
 
 <!-- BUSCADOR -->
@@ -197,8 +220,7 @@ $dias = ["lunes","martes","miercoles","jueves","viernes","sabado","domingo"];
 if(!empty($empleados)):
 foreach($empleados as $id => $emp): ?>
 
-<tr data-empleado="<?php echo $emp["nombre"]; ?>">
-<td><strong><?php echo $emp["nombre"]; ?></strong></td>
+<tr data-sucursal="<?php echo $emp["sucursal_nombre"]; ?>"><td><strong><?php echo $emp["nombre"]; ?></strong></td>
 
 <?php foreach($dias as $dia): ?>
 <td>
@@ -278,6 +300,18 @@ fila.style.display = "";
 }else{
 fila.style.display = fila.dataset.empleado === nombre ? "" : "none";
 }
+});
+}
+
+function filtrarSucursal(nombre){
+let filas = document.querySelectorAll("#tablaHorarios tbody tr");
+
+filas.forEach(fila=>{
+    if(nombre === "todas"){
+        fila.style.display = "";
+    }else{
+        fila.style.display = fila.dataset.sucursal === nombre ? "" : "none";
+    }
 });
 }
 

@@ -1,3 +1,5 @@
+
+
 <?php
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -148,7 +150,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
     <?php $rol = $_SESSION["usuario"]["rol"]; ?>
 
-    <?php if ($rol != "supervisor_marca"): ?>
+    <?php if ($rol != "supervisor_marca" && $rol != "gerente"): ?>
         <a href="?url=asistencias">Asistencias</a>
     <?php endif; ?>
 
@@ -160,11 +162,13 @@ if (session_status() === PHP_SESSION_NONE) {
     <?php endif; ?>
 
     <!-- ✅ ESTE SIEMPRE VISIBLE -->
+    <?php if ($rol != "gerente"): ?>
     <a href="?url=sucursales">Sucursales</a>
+<?php endif; ?>
 
-    <?php if ($rol != "supervisor_marca"): ?>
-        <a href="?url=reportes">Reportes</a>
-    <?php endif; ?>
+   <?php if ($rol != "supervisor_marca" && $rol != "gerente"): ?>
+    <a href="?url=reportes">Reportes</a>
+<?php endif; ?>
 
     <a href="?url=auth/logout" class="logout">Cerrar sesión</a>
 
