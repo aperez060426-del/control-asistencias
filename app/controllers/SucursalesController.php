@@ -73,8 +73,7 @@ class SucursalesController {
        EDITAR SUCURSAL
     =============================== */
 
-    public function editar(){
-
+        public function editar() {
         // 🔒 BLOQUEO
         if ($_SESSION["usuario"]["rol"] == "supervisor_marca") {
             echo "<script>
@@ -84,14 +83,32 @@ class SucursalesController {
             exit();
         }
 
-        $id = $_GET["id"];
+        // ✅ Validar que venga el id
+        if (!isset($_GET["id"]) || empty($_GET["id"])) {
+            echo "<script>
+            alert('ID de sucursal no proporcionado');
+            window.location.href='?url=sucursales';
+            </script>";
+            exit();
+        }
+
+        $id = intval($_GET["id"]);
 
         $stmt = $this->conn->prepare("SELECT * FROM sucursales WHERE id = ?");
-        $stmt->bind_param("i",$id);
+        $stmt->bind_param("i", $id);
         $stmt->execute();
 
         $result = $stmt->get_result();
         $sucursal = $result->fetch_assoc();
+
+        // ✅ Validar que exista la sucursal
+        if (!$sucursal) {
+            echo "<script>
+            alert('Sucursal no encontrada');
+            window.location.href='?url=sucursales';
+            </script>";
+            exit();
+        }
 
         require_once "../app/views/sucursales/editar.php";
     }
@@ -134,10 +151,8 @@ class SucursalesController {
     /* ===============================
        ELIMINAR SUCURSAL
     =============================== */
+    public function eliminar($id){
 
-    public function eliminar(){
-
-        // 🔒 SOLO ADMIN (igual que empleados)
         if ($_SESSION["usuario"]["rol"] != "admin") {
             echo "<script>
             alert('No tienes permisos para eliminar sucursales');
@@ -146,14 +161,11 @@ class SucursalesController {
             exit();
         }
 
-        $id = $_GET["id"];
-
-        $stmt = $this->conn->prepare("DELETE FROM sucursales WHERE id = ?");
+        $stmt = $this->conn->prepare("UPDATE sucursales SET activa = 0 WHERE id = ?");
         $stmt->bind_param("i",$id);
         $stmt->execute();
 
         header("Location: ?url=sucursales");
         exit();
     }
-
 }

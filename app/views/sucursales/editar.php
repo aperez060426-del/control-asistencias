@@ -86,12 +86,12 @@
 <form method="POST" action="?url=sucursales/actualizar">
 
     <!-- ID OCULTO -->
-    <input type="hidden" name="id" value="<?php echo $sucursal['id']; ?>">
+    <!-- ID OCULTO -->
+    <input type="hidden" name="id" value="<?= htmlspecialchars($sucursal['id'] ?? '') ?>">
 
     <label>Marca:</label>
     <select name="marca" required>
-
-        <option value="MVP" <?php if($sucursal['marca']=="MVP") echo "selected"; ?>>MVP</option>
+    <option value="MVP" <?php if($sucursal['marca']=="MVP") echo "selected"; ?>>MVP</option>
         <option value="MVC" <?php if($sucursal['marca']=="MVC") echo "selected"; ?>>MVC</option>
         <option value="CPR" <?php if($sucursal['marca']=="CPR") echo "selected"; ?>>CPR</option>
         <option value="CAFETERIA" <?php if($sucursal['marca']=="CAFETERIA") echo "selected"; ?>>CAFETERIA</option>
@@ -103,36 +103,34 @@
         <option value="ALLORA" <?php if($sucursal['marca']=="ALLORA") echo "selected"; ?>>ALLORA</option>
         <option value="CECAP" <?php if($sucursal['marca']=="CECAP") echo "selected"; ?>>CECAP</option>
         <option value="CORPORATIVO" <?php if($sucursal['marca']=="CORPORATIVO") echo "selected"; ?>>CORPORATIVO</option>
-
+        
     </select>
 
     <label>Nombre:</label>
-    <input type="text" name="nombre" value="<?php echo $sucursal['nombre']; ?>" required>
+    <input type="text" name="nombre" value="<?= htmlspecialchars($sucursal['nombre'] ?? '') ?>" required>
 
     <label>Dirección:</label>
-    <input type="text" name="direccion" value="<?php echo $sucursal['direccion']; ?>" required>
+    <input type="text" name="direccion" value="<?= htmlspecialchars($sucursal['direccion'] ?? '') ?>" required>
 
     <div class="row">
         <div>
             <label>Latitud:</label>
-            <input type="text" name="latitud" value="<?php echo $sucursal['latitud']; ?>" required>
+            <input type="text" name="latitud" value="<?= htmlspecialchars($sucursal['latitud'] ?? '') ?>" required>
         </div>
-
         <div>
             <label>Longitud:</label>
-            <input type="text" name="longitud" value="<?php echo $sucursal['longitud']; ?>" required>
+            <input type="text" name="longitud" value="<?= htmlspecialchars($sucursal['longitud'] ?? '') ?>" required>
         </div>
     </div>
 
     <div class="row">
         <div>
             <label>Radio (metros):</label>
-            <input type="number" name="radio" value="<?php echo $sucursal['radio_metros']; ?>" required>
+            <input type="number" name="radio" value="<?= htmlspecialchars($sucursal['radio_metros'] ?? '') ?>" required>
         </div>
-
         <div>
             <label>Tolerancia (minutos):</label>
-            <input type="number" name="tolerancia" value="<?php echo $sucursal['tolerancia_minutos']; ?>" required>
+            <input type="number" name="tolerancia" value="<?= htmlspecialchars($sucursal['tolerancia_minutos'] ?? '') ?>" required>
         </div>
     </div>
 

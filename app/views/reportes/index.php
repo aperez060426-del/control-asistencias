@@ -156,18 +156,56 @@
 <body>
 
 <h2>Reporte de Asistencias</h2>
-
 <form method="GET">
     <input type="hidden" name="url" value="reportes">
 
     <div>
         <label>Fecha Inicio</label>
-        <input type="date" name="fecha_inicio" required>
+        <input type="date" name="fecha_inicio" required
+        value="<?php echo $_GET['fecha_inicio'] ?? ''; ?>">
     </div>
 
     <div>
         <label>Fecha Fin</label>
-        <input type="date" name="fecha_fin" required>
+        <input type="date" name="fecha_fin" required
+        value="<?php echo $_GET['fecha_fin'] ?? ''; ?>">
+    </div>
+
+    <!-- ✅ NUEVO: SUCURSAL -->
+    <div>
+        <label>Sucursal</label>
+        <select name="sucursal">
+            <option value="">Todas</option>
+            <?php while($s = $sucursales->fetch_assoc()): ?>
+                <option value="<?php echo $s['id']; ?>"
+                <?php if(($sucursal ?? '') == $s['id']) echo 'selected'; ?>>
+                    <?php echo $s['nombre']; ?>
+                </option>
+            <?php endwhile; ?>
+        </select>
+    </div>
+
+    <!-- ✅ NUEVO: EMPLEADO -->
+    <div>
+        <label>Buscar empleado</label>
+        <input type="text" name="empleado"
+        value="<?php echo $empleado ?? ''; ?>"
+        placeholder="Nombre del empleado">
+    </div>
+
+    <!-- ✅ NUEVO: ESTADO -->
+    <div>
+        <label>Filtrar por</label>
+        <select name="filtro_estado">
+            <option value="">Todos</option>
+            <option value="puntual" <?php if(($filtro_estado ?? '')=="puntual") echo "selected"; ?>>Puntual</option>
+            <option value="retardo" <?php if(($filtro_estado ?? '')=="retardo") echo "selected"; ?>>Retardo</option>
+            <option value="fuera_de_rango" <?php if(($filtro_estado ?? '')=="fuera_de_rango") echo "selected"; ?>>Fuera de rango</option>
+            <option value="falta" <?php if(($filtro_estado ?? '')=="falta") echo "selected"; ?>>Falta</option>
+            <option value="vacaciones" <?php if(($filtro_estado ?? '')=="vacaciones") echo "selected"; ?>>Vacaciones</option>
+            <option value="incapacidad" <?php if(($filtro_estado ?? '')=="incapacidad") echo "selected"; ?>>Incapacidad</option>
+            <option value="descanso" <?php if(($filtro_estado ?? '')=="descanso") echo "selected"; ?>>Descanso</option>
+        </select>
     </div>
 
     <button type="submit">Generar Reporte</button>
@@ -213,10 +251,6 @@ if(!function_exists("natalicioBenitoJuarez")){
         <p><?php echo $totales["fuera_de_rango"]; ?></p>
     </div>
 
-        <div class="card">
-        <h4>Permisos</h4>
-        <p><?php echo $totales["permisos"]; ?></p>
-    </div>
 
     <div class="card">
         <h4>Total Horas</h4>
@@ -266,78 +300,101 @@ new Chart(ctx, {
 <script>
 function exportarExcel(){
 
-    var tabla = document.getElementById("tablaReporte");
+    let tabla = document.getElementById("tablaReporte");
 
     if(!tabla){
-        alert("No se encontró la tabla para exportar");
+        alert("No hay datos para exportar");
         return;
     }
 
-    var wb = XLSX.utils.book_new();
-    var ws = XLSX.utils.table_to_sheet(tabla);
+    let datos = [];
 
-    const rango = XLSX.utils.decode_range(ws['!ref']);
+    // 🔹 encabezados
+    let headers = [];
+    let ths = tabla.querySelectorAll("thead th, tr:first-child th");
 
-    for(let R = rango.s.r+1; R <= rango.e.r; ++R){
+    if(ths.length === 0){
+        ths = tabla.rows[0].cells;
+    }
 
-        let celdaEstado = ws[XLSX.utils.encode_cell({r:R, c:4})];
+    for(let th of ths){
+        headers.push(th.innerText.trim());
+    }
 
-        if(!celdaEstado || !celdaEstado.v) continue;
+    datos.push(headers);
 
-        let valor = celdaEstado.v.toString().toLowerCase().trim();
+    // 🔹 filas
+    for(let i = 1; i < tabla.rows.length; i++){
+
+        let fila = [];
+        let celdas = tabla.rows[i].cells;
+
+        for(let j = 0; j < celdas.length; j++){
+
+            let texto = celdas[j].innerText.trim();
+            fila.push(texto);
+        }
+
+        datos.push(fila);
+    }
+
+    // 🔹 crear hoja
+    let ws = XLSX.utils.aoa_to_sheet(datos);
+
+    // 🔥 aplicar colores a columna Estado (columna 5 = índice 5)
+    for(let i = 1; i < datos.length; i++){
+
+        let estado = datos[i][5] ? datos[i][5].toLowerCase() : "";
+        let celdaRef = XLSX.utils.encode_cell({ r:i, c:5 });
+
+        if(!ws[celdaRef]) continue;
 
         let estilo = {
             font:{ bold:true },
             alignment:{ horizontal:"center", vertical:"center" }
         };
 
-        switch(true){
-            case valor.includes("puntual"):
-                estilo.fill = { patternType:"solid", fgColor:{ rgb:"DCFCE7" }};
-                estilo.font.color = { rgb:"166534" };
-                break;
-
-            case valor.includes("retardo"):
-                estilo.fill = { patternType:"solid", fgColor:{ rgb:"DEB887" }}; // burlywood
-                estilo.font.color = { rgb:"854D0E" };
-                break;
-
-            case valor.includes("fuera"):
-            case valor.includes("falta"):
-                estilo.fill = { patternType:"solid", fgColor:{ rgb:"FEE2E2" }};
-                estilo.font.color = { rgb:"991B1B" };
-                break;
-
-            case valor.includes("vacaciones"):
-                estilo.fill = { patternType:"solid", fgColor:{ rgb:"F0D980" }};
-                estilo.font.color = { rgb:"FFFFFF" };
-                break;
-
-            case valor.includes("incapacidad"):
-                estilo.fill = { patternType:"solid", fgColor:{ rgb:"FFB6C1" }};
-                estilo.font.color = { rgb:"000000" };
-                break;
-
-            case valor.includes("permiso"):
-                estilo.fill = { patternType:"solid", fgColor:{ rgb:"FDBE47" }};
-                estilo.font.color = { rgb:"000000" };
-                break;
-
-            case valor.includes("festivo"):
-                estilo.fill = { patternType:"solid", fgColor:{ rgb:"BCB8C9" }};
-                estilo.font.color = { rgb:"000000" };
-                break;
-
-            case valor.includes("descanso"):
-                estilo.fill = { patternType:"solid", fgColor:{ rgb:"ADD8E6" }}; // lightblue
-                estilo.font.color = { rgb:"000000" };
-                break;
+        if(estado.includes("puntual")){
+            estilo.fill = { patternType:"solid", fgColor:{ rgb:"DCFCE7" }};
+            estilo.font.color = { rgb:"166534" };
+        }
+        else if(estado.includes("retardo")){
+            estilo.fill = { patternType:"solid", fgColor:{ rgb:"DEB887" }};
+            estilo.font.color = { rgb:"854D0E" };
+        }
+        else if(estado.includes("fuera") || estado.includes("falta")){
+            estilo.fill = { patternType:"solid", fgColor:{ rgb:"FEE2E2" }};
+            estilo.font.color = { rgb:"991B1B" };
+        }
+        else if(estado.includes("vacaciones")){
+            estilo.fill = { patternType:"solid", fgColor:{ rgb:"F0D980" }};
+            estilo.font.color = { rgb:"000000" };
+        }
+        else if(estado.includes("incapacidad")){
+            estilo.fill = { patternType:"solid", fgColor:{ rgb:"FFB6C1" }};
+            estilo.font.color = { rgb:"000000" };
+        }
+        else if(estado.includes("permiso")){
+            estilo.fill = { patternType:"solid", fgColor:{ rgb:"FDBE47" }};
+            estilo.font.color = { rgb:"000000" };
+        }
+        else if(estado.includes("festivo")){
+            estilo.fill = { patternType:"solid", fgColor:{ rgb:"BCB8C9" }};
+            estilo.font.color = { rgb:"000000" };
+        }
+        else if(estado.includes("descanso")){
+            estilo.fill = { patternType:"solid", fgColor:{ rgb:"ADD8E6" }};
+            estilo.font.color = { rgb:"000000" };
         }
 
-        celdaEstado.s = estilo;
+        ws[celdaRef].s = estilo;
     }
 
+    // 🔹 crear libro
+    let wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Reporte");
+
+    // 🔹 exportar
     XLSX.writeFile(wb, "Reporte_Asistencias.xlsx");
 }
 </script>

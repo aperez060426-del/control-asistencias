@@ -30,65 +30,110 @@ class ReportesController {
         $this->conn = $db->connect();
     }
 
-    public function index() {
+  public function index() {
 
-        $fecha_inicio = $_GET["fecha_inicio"] ?? null;
-        $fecha_fin = $_GET["fecha_fin"] ?? null;
+    $fecha_inicio = $_GET["fecha_inicio"] ?? null;
+    $fecha_fin = $_GET["fecha_fin"] ?? null;
 
-        $result = null;
+    // ✅ NUEVOS FILTROS
+    $sucursal = $_GET["sucursal"] ?? null;
+    $empleado = $_GET["empleado"] ?? null;
+    $filtro_estado = $_GET["filtro_estado"] ?? null;
 
-        $totales = [
-            "asistencias" => 0,
-            "retardos" => 0,
-            "puntuales" => 0,
-            "fuera_de_rango" => 0,
-            "horas" => 0
-        ];
+    // ✅ OBTENER SUCURSALES (para el select)
+    $sucursales = $this->conn->query("SELECT id, nombre FROM sucursales");
 
-        if ($fecha_inicio && $fecha_fin) {
+    $result = null;
 
-            $stmt = $this->conn->prepare("
-                SELECT a.*, e.nombre AS empleado_nombre
-                FROM asistencias a
-                INNER JOIN empleados e ON a.empleado_id = e.id
-                WHERE a.fecha BETWEEN ? AND ?
-                ORDER BY a.fecha DESC
-            ");
+    $totales = [
+        "asistencias" => 0,
+        "retardos" => 0,
+        "puntuales" => 0,
+        "fuera_de_rango" => 0,
+        "horas" => 0
+    ];
 
-            $stmt->bind_param("ss", $fecha_inicio, $fecha_fin);
-            $stmt->execute();
-            $result = $stmt->get_result();
+    if ($fecha_inicio && $fecha_fin) {
 
-            // 🔹 Calcular totales
-            while ($row = $result->fetch_assoc()) {
+        // ✅ QUERY DINÁMICO
+        $query = "
+            SELECT a.*, e.nombre AS empleado_nombre
+            FROM asistencias a
+            INNER JOIN empleados e ON a.empleado_id = e.id
+            WHERE a.fecha BETWEEN ? AND ?
+        ";
 
-                $totales["asistencias"]++;
+        $params = [$fecha_inicio, $fecha_fin];
+        $types = "ss";
 
-                if ($row["estado"] == "retardo") {
-                    $totales["retardos"]++;
-                }
-
-                if ($row["estado"] == "puntual") {
-                    $totales["puntuales"]++;
-                }
-
-                if ($row["estado"] == "fuera_de_rango") {
-                    $totales["fuera_de_rango"]++;
-                }
-
-                if (!empty($row["hora_salida"])) {
-                    $entrada = strtotime($row["hora_entrada"]);
-                    $salida = strtotime($row["hora_salida"]);
-                    $horas = ($salida - $entrada) / 3600;
-                    $totales["horas"] += $horas;
-                }
-            }
-
-            // 🔹 Volver a ejecutar para mostrar la tabla
-            $stmt->execute();
-            $result = $stmt->get_result();
+        // 🔹 FILTRO SUCURSAL
+        if (!empty($sucursal)) {
+            $query .= " AND e.sucursal_id = ?";
+            $params[] = $sucursal;
+            $types .= "i";
         }
 
-        require_once "../app/views/reportes/index.php";
+        // 🔹 FILTRO EMPLEADO
+        if (!empty($empleado)) {
+            $query .= " AND e.nombre LIKE ?";
+            $params[] = "%$empleado%";
+            $types .= "s";
+        }
+
+        // 🔹 FILTRO ESTADO
+        if (!empty($filtro_estado)) {
+
+            if ($filtro_estado == "falta" || $filtro_estado == "fuera_de_rango") {
+                $query .= " AND (a.estado = 'falta' OR a.estado = 'fuera_de_rango')";
+            } 
+            elseif ($filtro_estado == "incapacidad" || $filtro_estado == "descanso") {
+                $query .= " AND (a.estado = 'incapacidad' OR a.estado = 'descanso')";
+            } 
+            else {
+                $query .= " AND a.estado = ?";
+                $params[] = $filtro_estado;
+                $types .= "s";
+            }
+        }
+
+        $query .= " ORDER BY a.fecha DESC";
+
+        // ✅ PREPARE DINÁMICO
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param($types, ...$params);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        // 🔹 TOTALES (tu lógica intacta)
+        while ($row = $result->fetch_assoc()) {
+
+            $totales["asistencias"]++;
+
+            if ($row["estado"] == "retardo") {
+                $totales["retardos"]++;
+            }
+
+            if ($row["estado"] == "puntual") {
+                $totales["puntuales"]++;
+            }
+
+            if ($row["estado"] == "fuera_de_rango") {
+                $totales["fuera_de_rango"]++;
+            }
+
+            if (!empty($row["hora_salida"])) {
+                $entrada = strtotime($row["hora_entrada"]);
+                $salida = strtotime($row["hora_salida"]);
+                $horas = ($salida - $entrada) / 3600;
+                $totales["horas"] += $horas;
+            }
+        }
+
+        // 🔁 RE-EJECUTAR PARA LA TABLA
+        $stmt->execute();
+        $result = $stmt->get_result();
     }
+
+    require_once "../app/views/reportes/index.php";
+}
 }

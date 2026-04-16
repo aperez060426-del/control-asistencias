@@ -20,13 +20,12 @@ font-family: 'Poppins', sans-serif;
 
 .header {
     text-align: center;
-    margin-bottom: 20px;         /* Espacio entre el logo y la caja de login */
+    margin-bottom: 20px;
 }
 
 .header img {
     width: 240px;
 }
-
 
 .card-app{
 background: rgba(255,255,255,0.95);
@@ -77,30 +76,50 @@ transform:translateY(-3px);
 box-shadow:0 10px 20px rgba(0,0,0,0.2);
 }
 
-.btn-modern:active{
-transform:scale(0.97);
-}
-
-.preview-img{
-width:100%;
-border-radius:20px;
-margin-top:10px;
-display:none;
-}
-
-.check-success{
+/* 🔥 MENSAJE */
+.mensaje-box{
 position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,0.5);
-display:flex;
-align-items:center;
-justify-content:center;
-font-size:120px;
-color:#00c853;
+top:50%;
+left:50%;
+transform:translate(-50%, -50%);
+background:#fff;
+padding:30px 40px;
+border-radius:20px;
+box-shadow:0 15px 40px rgba(0,0,0,0.3);
+text-align:center;
 display:none;
+z-index:999;
+animation: aparecer 0.3s ease;
+}
+
+@keyframes aparecer{
+from{
+opacity:0;
+transform:translate(-50%, -60%);
+}
+to{
+opacity:1;
+transform:translate(-50%, -50%);
+}
+}
+
+.icono{
+font-size:60px;
+margin-bottom:10px;
+}
+
+.success{
+color:#00c853;
+}
+
+.error{
+color:#ff3d00;
+}
+
+.texto-mensaje{
+font-size:18px;
+font-weight:500;
+color:#333;
 }
 </style>
 </head>
@@ -112,13 +131,17 @@ display:none;
 </div>
 
 <?php
+$mensaje = "";
+$tipo = "";
 
 if (isset($_SESSION["flash_mensaje"])) {
     $mensaje = $_SESSION["flash_mensaje"];
+    $tipo = $_SESSION["flash_tipo"] ?? "success";
     unset($_SESSION["flash_mensaje"]);
     unset($_SESSION["flash_tipo"]);
 }
 ?>
+
 <div class="col-md-4">
 <div class="card-app">
 
@@ -129,12 +152,9 @@ if (isset($_SESSION["flash_mensaje"])) {
 <div class="reloj" id="reloj"></div>
 </div>
 
-<form method="POST" action="?url=checador/registrar" enctype="multipart/form-data">
+<form method="POST" action="?url=checador/registrar">
+
 <input type="text" name="codigo" class="form-control mb-3" placeholder="Código de empleado" required>
-
-<input type="file" name="foto" id="foto" class="form-control mb-2" accept="image/*" capture="environment">
-
-<img id="preview" class="preview-img"/>
 
 <input type="hidden" name="latitud" id="latitud">
 <input type="hidden" name="longitud" id="longitud">
@@ -144,7 +164,6 @@ if (isset($_SESSION["flash_mensaje"])) {
 <button type="submit" name="tipo" value="entrada" class="btn btn-modern btn-entrada">
 <i class="bi bi-box-arrow-in-right"></i> Registrar Entrada
 </button>
-<div id="alerta" class="alert alert-success text-center" style="display:none;"></div>
 
 <button type="submit" name="tipo" value="salida" class="btn btn-modern btn-salida">
 <i class="bi bi-box-arrow-left"></i> Registrar Salida
@@ -157,15 +176,15 @@ if (isset($_SESSION["flash_mensaje"])) {
 </div>
 </div>
 
-<div class="check-success" id="check">
-<div style="text-align:center;">
-<i class="bi bi-check-circle-fill"></i>
-<div id="mensajeCheck" style="font-size:25px; margin-top:10px;"></div>
-</div>
+<!-- 🔥 MENSAJE -->
+<div class="mensaje-box" id="mensajeBox">
+<div id="iconoEstado" class="icono"></div>
+<div id="textoMensaje" class="texto-mensaje"></div>
 </div>
 
 <script>
-let mensajeBackend = "<?php echo $mensaje ?? ''; ?>";
+let mensajeBackend = "<?php echo $mensaje; ?>";
+let tipoBackend = "<?php echo $tipo; ?>";
 
 window.onload = function(){
 
@@ -176,17 +195,6 @@ window.onload = function(){
   }
   setInterval(actualizarReloj,1000);
   actualizarReloj();
-
-  // 📷 preview
-  document.getElementById("foto").addEventListener("change",function(e){
-    const reader=new FileReader();
-    reader.onload=function(){
-      const preview=document.getElementById("preview");
-      preview.src=reader.result;
-      preview.style.display="block";
-    }
-    reader.readAsDataURL(e.target.files[0]);
-  });
 
   // 📍 GPS
   if(navigator.geolocation){
@@ -201,32 +209,32 @@ window.onload = function(){
     );
   }
 
-  // 🔥 MENSAJE DEL BACKEND
-// 🔥 MENSAJE BONITO CON HORA
-if(mensajeBackend !== ""){
+  // 🔥 MENSAJE
+  if(mensajeBackend !== ""){
 
-  const ahora = new Date();
-  const hora = ahora.toLocaleTimeString();
+    const box = document.getElementById("mensajeBox");
+    const texto = document.getElementById("textoMensaje");
+    const icono = document.getElementById("iconoEstado");
 
-  const mensajeFinal = mensajeBackend + " a las " + hora;
+    const ahora = new Date().toLocaleTimeString();
 
-  const check = document.getElementById("check");
-  const mensaje = document.getElementById("mensajeCheck");
+    texto.innerText = mensajeBackend + " a las " + ahora;
 
-  mensaje.innerText = mensajeFinal;
+    if(tipoBackend === "success"){
+        icono.innerHTML = '<i class="bi bi-check-circle-fill success"></i>';
+    }else{
+        icono.innerHTML = '<i class="bi bi-x-circle-fill error"></i>';
+    }
 
-  check.style.display = "flex";
+    box.style.display = "block";
 
-  // Ocultar después de 3 segundos
-  setTimeout(() => {
-    check.style.display = "none";
-  }, 3000);
+    setTimeout(()=>{
+        box.style.display = "none";
+    },3000);
+  }
+
 }
-
-}
-
-
-
 </script>
+
 </body>
 </html>

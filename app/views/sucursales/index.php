@@ -189,22 +189,39 @@ to{opacity:1; transform:translateY(0);}
 
 /* LISTA */
 
-.menu-sucursales ul{
-    list-style:none;
-    padding:0;
-    margin:0;
+.menu-sucursales{
+
+    position:absolute;
+    top:100%;
+margin-top:10px;
+    width:280px;
+
+    background:white;
+    color:#111;
+
+    border-radius:12px;
+
+    box-shadow:0 15px 40px rgba(0,0,0,0.5);
+
+    padding:10px;
+
+    display:none;
+
+    animation:fade .2s ease;
+
+    z-index:9999;
+
+    max-height: 300px; /* 👈 NUEVO */
+    overflow-y: auto;  /* 👈 NUEVO */
 }
 
-.menu-sucursales li{
-
-    padding:12px;
-
-    border-bottom:1px solid #eee;
-
+.menu-sucursales::-webkit-scrollbar{
+    width:6px;
 }
 
-.menu-sucursales li:last-child{
-border:none;
+.menu-sucursales::-webkit-scrollbar-thumb{
+    background:#2563eb;
+    border-radius:10px;
 }
 
 /* SUCURSAL */
@@ -320,11 +337,11 @@ if($row["marca"] === $marca):
 
 <div class="acciones">
 
-<a href="?url=sucursales/editar&id=<?php echo $row["id"]; ?>" class="icono">✏️</a>
+<a href="?url=sucursales/editar&id=<?= $row["id"] ?>" class="icono">✏️</a>
 
-<a href="?url=sucursales/eliminar&id=<?php echo $row["id"]; ?>" 
-class="icono"
-onclick="return confirm('¿Eliminar esta sucursal?')">🗑️</a>
+<a href="?url=sucursales/eliminar&id=<?= $row["id"] ?>" 
+   class="icono" 
+   onclick="return confirm('¿Eliminar esta sucursal?')">🗑️</a>
 
 </div>
 
