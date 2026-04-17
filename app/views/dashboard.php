@@ -130,7 +130,7 @@ if (session_status() === PHP_SESSION_NONE) {
 <!-- VIDEO FULL -->
 <div class="video-container">
     <video autoplay muted loop playsinline>
-        <source src="/control-asistencias/public/video/video.mp4" type="video/mp4">
+        <source src="video/video.mp4" type="video/mp4">
     </video>
 </div>
 
