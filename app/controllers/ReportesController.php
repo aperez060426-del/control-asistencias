@@ -1,4 +1,4 @@
-<?php
+<?php 
 
 require_once "../config/Database.php";
 
@@ -19,7 +19,7 @@ class ReportesController {
             exit();
         }
 
-        // 🔒 Solo ADMIN (tu base de datos usa "admin")
+        // 🔒 Solo ADMIN
         if (!isset($_SESSION["usuario"]["rol"]) || 
             strtolower($_SESSION["usuario"]["rol"]) != "admin") {
 
@@ -35,12 +35,12 @@ class ReportesController {
     $fecha_inicio = $_GET["fecha_inicio"] ?? null;
     $fecha_fin = $_GET["fecha_fin"] ?? null;
 
-    // ✅ NUEVOS FILTROS
+    // ✅ FILTROS
     $sucursal = $_GET["sucursal"] ?? null;
     $empleado = $_GET["empleado"] ?? null;
     $filtro_estado = $_GET["filtro_estado"] ?? null;
 
-    // ✅ OBTENER SUCURSALES (para el select)
+    // ✅ SUCURSALES
     $sucursales = $this->conn->query("SELECT id, nombre FROM sucursales");
 
     $result = null;
@@ -55,11 +55,14 @@ class ReportesController {
 
     if ($fecha_inicio && $fecha_fin) {
 
-        // ✅ QUERY DINÁMICO
+        // 🔥 AQUÍ ESTÁ EL CAMBIO IMPORTANTE
         $query = "
-            SELECT a.*, e.nombre AS empleado_nombre
+            SELECT a.*, 
+                   e.nombre AS empleado_nombre,
+                   s.nombre AS sucursal_nombre
             FROM asistencias a
             INNER JOIN empleados e ON a.empleado_id = e.id
+            LEFT JOIN sucursales s ON e.sucursal_id = s.id
             WHERE a.fecha BETWEEN ? AND ?
         ";
 
@@ -98,13 +101,13 @@ class ReportesController {
 
         $query .= " ORDER BY a.fecha DESC";
 
-        // ✅ PREPARE DINÁMICO
+        // ✅ PREPARE
         $stmt = $this->conn->prepare($query);
         $stmt->bind_param($types, ...$params);
         $stmt->execute();
         $result = $stmt->get_result();
 
-        // 🔹 TOTALES (tu lógica intacta)
+        // 🔹 TOTALES (sin tocar)
         while ($row = $result->fetch_assoc()) {
 
             $totales["asistencias"]++;
@@ -129,7 +132,7 @@ class ReportesController {
             }
         }
 
-        // 🔁 RE-EJECUTAR PARA LA TABLA
+        // 🔁 RE-EJECUTAR (igual)
         $stmt->execute();
         $result = $stmt->get_result();
     }

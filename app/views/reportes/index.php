@@ -404,6 +404,7 @@ function exportarExcel(){
 <table id="tablaReporte">
     <tr>
         <th>Empleado</th>
+        <th>Sucursal</th> <!-- ✅ AGREGADO -->
         <th>Fecha</th>
         <th>Entrada</th>
         <th>Salida</th>
@@ -444,13 +445,14 @@ function exportarExcel(){
         <?php
         $horaEntrada = $row["hora_entrada"] ? strtotime($row["hora_entrada"]) : 0;
         $horaSalida  = $row["hora_salida"] ? strtotime($row["hora_salida"]) : 0;
-        $horasJornada = 8 * 3600; // 8 horas en segundos, ajusta si tu jornada es distinta
+        $horasJornada = 8 * 3600;
         $horasTrabajadas = max(0, $horaSalida - $horaEntrada);
         $horasExtra = max(0, $horasTrabajadas - $horasJornada);
 ?>
 
     <tr>
         <td><?php echo $row["empleado_nombre"]; ?></td>
+        <td><?php echo $row["sucursal_nombre"]; ?></td> <!-- ✅ AGREGADO -->
         <td><?php echo $row["fecha"]; ?></td>
         <td><?php echo $row["hora_entrada"] ? date("H:i:s", strtotime($row["hora_entrada"])) : "—"; ?></td>
         <td><?php echo $row["hora_salida"] ? date("H:i:s", strtotime($row["hora_salida"])) : "—"; ?></td>
