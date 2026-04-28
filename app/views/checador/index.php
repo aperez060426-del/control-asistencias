@@ -154,18 +154,43 @@ if (isset($_SESSION["flash_mensaje"])) {
 
 <form method="POST" action="?url=checador/registrar">
 
-<input type="text" name="codigo" class="form-control mb-3" placeholder="Código de empleado" required>
+<input 
+type="text" 
+name="codigo" 
+class="form-control mb-3" 
+placeholder="Código de empleado" 
+required
+>
+
+<!-- ✅ NUEVO: CONTRASEÑA -->
+<input 
+type="password" 
+name="password" 
+class="form-control mb-3" 
+placeholder="Contraseña" 
+required
+>
 
 <input type="hidden" name="latitud" id="latitud">
 <input type="hidden" name="longitud" id="longitud">
 
 <div class="d-grid gap-3 mt-4">
 
-<button type="submit" name="tipo" value="entrada" class="btn btn-modern btn-entrada">
+<button 
+type="submit" 
+name="tipo" 
+value="entrada" 
+class="btn btn-modern btn-entrada"
+>
 <i class="bi bi-box-arrow-in-right"></i> Registrar Entrada
 </button>
 
-<button type="submit" name="tipo" value="salida" class="btn btn-modern btn-salida">
+<button 
+type="submit" 
+name="tipo" 
+value="salida" 
+class="btn btn-modern btn-salida"
+>
 <i class="bi bi-box-arrow-left"></i> Registrar Salida
 </button>
 
@@ -190,10 +215,11 @@ window.onload = function(){
 
   // ⏰ reloj
   function actualizarReloj(){
-    const ahora=new Date();
-    document.getElementById("reloj").innerText=ahora.toLocaleTimeString();
+    const ahora = new Date();
+    document.getElementById("reloj").innerText = ahora.toLocaleTimeString();
   }
-  setInterval(actualizarReloj,1000);
+
+  setInterval(actualizarReloj, 1000);
   actualizarReloj();
 
   // 📍 GPS
@@ -228,9 +254,9 @@ window.onload = function(){
 
     box.style.display = "block";
 
-    setTimeout(()=>{
+    setTimeout(() => {
         box.style.display = "none";
-    },3000);
+    }, 3000);
   }
 
 }

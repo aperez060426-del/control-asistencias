@@ -21,6 +21,7 @@ class ChecadorController {
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             $codigo = strtoupper(trim($_POST["codigo"]));
+            $password = trim($_POST["password"] ?? ""); // ✅ NUEVO
             $tipo = $_POST["tipo"] ?? "";
 
             $lat = $_POST["latitud"] ?? null;
@@ -42,6 +43,16 @@ class ChecadorController {
 
             if (!$empleado) {
                 $this->mensaje("Empleado no encontrado", "error");
+            }
+
+            // 🔐 VALIDAR CONTRASEÑA
+            $passwordBD = $empleado["password"];
+
+            if (
+                $passwordBD !== $password &&
+                !password_verify($password, $passwordBD)
+            ) {
+                $this->mensaje("Contraseña incorrecta", "error");
             }
 
             // 🔎 Obtener sucursal
@@ -160,6 +171,7 @@ class ChecadorController {
                             <h2 style="color:orange;">⚠️ Salida anticipada</h2>
                             <form method="POST" action="?url=checador/registrar">
                                 <input type="hidden" name="codigo" value="'.$codigo.'">
+                                <input type="hidden" name="password" value="'.$password.'">
                                 <input type="hidden" name="tipo" value="salida">
                                 <input type="hidden" name="latitud" value="'.$lat.'">
                                 <input type="hidden" name="longitud" value="'.$lng.'">
