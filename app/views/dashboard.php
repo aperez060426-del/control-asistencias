@@ -1,5 +1,3 @@
-
-
 <?php
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -19,15 +17,16 @@ if (session_status() === PHP_SESSION_NONE) {
     box-sizing:border-box;
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
 }
+
 .header{
     text-align:center;
     padding:40px 20px;
 }
 
-
 .header img{
     width:240px;
 }
+
 .header h1{
     font-weight:300;
     letter-spacing:4px;
@@ -138,41 +137,53 @@ if (session_status() === PHP_SESSION_NONE) {
 
 <!-- CONTENIDO -->
 <div class="content">
+
     <div class="header">
-            <img src="imagen/Grupo-Plaza-2024-blanca.png" type="imagen/png">
+        <img src="imagen/Grupo-Plaza-2024-blanca.png" type="imagen/png">
+
         <h1>Control de Asistencias</h1>
-        <p>Bienvenido <?php echo $_SESSION["usuario"]["nombre"]; ?> | 
-        Rol: <?php echo strtoupper($_SESSION["usuario"]["rol"]); ?>
+
+        <p>
+            Bienvenido <?php echo $_SESSION["usuario"]["nombre"]; ?> |
+            Rol: <?php echo strtoupper($_SESSION["usuario"]["rol"]); ?>
         </p>
     </div>
 
     <div class="menu-buttons">
 
-    <?php $rol = $_SESSION["usuario"]["rol"]; ?>
+        <?php $rol = $_SESSION["usuario"]["rol"]; ?>
 
-    <?php if ($rol != "supervisor_marca" && $rol != "gerente"): ?>
-        <a href="?url=asistencias">Asistencias</a>
-    <?php endif; ?>
+        <!-- ASISTENCIAS -->
+        <?php if ($rol != "supervisor_marca" && $rol != "gerente"): ?>
+            <a href="?url=asistencias">Asistencias</a>
+        <?php endif; ?>
 
-    <!-- ✅ ESTE SIEMPRE VISIBLE -->
-    <a href="?url=empleados">Empleados</a>
+        <!-- EMPLEADOS (SIEMPRE VISIBLE) -->
+        <a href="?url=empleados">Empleados</a>
 
-    <?php if ($rol != "supervisor_marca"): ?>
-        <a class="btn" href="?url=horarios">Horarios</a>
-    <?php endif; ?>
+        <!-- HORARIOS -->
+        <?php if ($rol != "supervisor_marca"): ?>
+            <a href="?url=horarios">Horarios</a>
+        <?php endif; ?>
 
-    <!-- ✅ ESTE SIEMPRE VISIBLE -->
-    <?php if ($rol != "gerente"): ?>
-    <a href="?url=sucursales">Sucursales</a>
-<?php endif; ?>
+        <!-- SUCURSALES -->
+        <?php if ($rol != "gerente"): ?>
+            <a href="?url=sucursales">Sucursales</a>
+        <?php endif; ?>
 
-   <?php if ($rol != "supervisor_marca" && $rol != "gerente"): ?>
-    <a href="?url=reportes">Reportes</a>
-<?php endif; ?>
+        <!-- REPORTES -->
+        <!-- ✅ Ahora GERENTE también puede verlo -->
+        <?php if ($rol != "supervisor_marca"): ?>
+            <a href="?url=reportes">Reportes</a>
+        <?php endif; ?>
 
-    <a href="?url=auth/logout" class="logout">Cerrar sesión</a>
+        <!-- CERRAR SESIÓN -->
+        <a href="?url=auth/logout" class="logout">
+            Cerrar sesión
+        </a>
 
-</div>
+    </div>
+
 </div>
 
 </body>

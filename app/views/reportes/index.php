@@ -403,6 +403,7 @@ function exportarExcel(){
 
 <table id="tablaReporte">
     <tr>
+        <th>Código</th>
         <th>Empleado</th>
         <th>Sucursal</th> <!-- ✅ AGREGADO -->
         <th>Fecha</th>
@@ -451,6 +452,7 @@ function exportarExcel(){
 ?>
 
     <tr>
+        <td><?php echo $row["codigo"]; ?></td>
         <td><?php echo $row["empleado_nombre"]; ?></td>
         <td><?php echo $row["sucursal_nombre"]; ?></td> <!-- ✅ AGREGADO -->
         <td><?php echo $row["fecha"]; ?></td>
