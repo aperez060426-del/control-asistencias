@@ -30,6 +30,7 @@ class ChecadorController {
                 $this->mensaje("Ubicación no detectada", "error");
             }
 
+            // Buscar empleado
             $stmt = $this->conn->prepare("
                 SELECT * FROM empleados
                 WHERE codigo = ?
@@ -45,6 +46,7 @@ class ChecadorController {
                 $this->mensaje("Empleado no encontrado", "error");
             }
 
+            // Validar contraseña
             $passwordBD = $empleado["password"];
 
             if (
@@ -54,6 +56,7 @@ class ChecadorController {
                 $this->mensaje("Contraseña incorrecta", "error");
             }
 
+            // Obtener sucursal
             $stmt2 = $this->conn->prepare("
                 SELECT * FROM sucursales
                 WHERE id = ?
@@ -69,6 +72,7 @@ class ChecadorController {
                 $this->mensaje("Sucursal no válida", "error");
             }
 
+            // Validar distancia
             $distancia = $this->calcularDistancia(
                 $lat,
                 $lng,
@@ -83,10 +87,7 @@ class ChecadorController {
             $fecha = date("Y-m-d");
             $hora_actual = date("Y-m-d H:i:s");
 
-            // ======================================
-            // BUSCAR ASISTENCIA ABIERTA
-            // ======================================
-
+            // Buscar asistencia abierta
             $check = $this->conn->prepare("
                 SELECT *
                 FROM asistencias
@@ -101,10 +102,7 @@ class ChecadorController {
 
             $asistencia = $check->get_result()->fetch_assoc();
 
-            // ======================================
-            // VALIDAR HORARIO
-            // ======================================
-
+            // Obtener horario
             $stmtHorario = $this->conn->prepare("
                 SELECT *
                 FROM horarios
@@ -120,11 +118,7 @@ class ChecadorController {
 
             $horario = $stmtHorario->get_result()->fetch_assoc();
 
-            // ======================================
-            // CIERRE AUTOMÁTICO SI YA CAMBIÓ EL DÍA
-            // Y NO TIENE HORARIO
-            // ======================================
-
+            // Cerrar asistencia automáticamente si NO tiene horario
             if ($asistencia && !$horario) {
 
                 $fechaEntrada = date(
@@ -136,14 +130,12 @@ class ChecadorController {
 
                     $cerrar = $this->conn->prepare("
                         UPDATE asistencias
-                        SET
-                            hora_salida = ?,
-                            cerrado_automaticamente = 1,
-                            observacion = 'Cierre automático por olvido'
+                        SET hora_salida = ?
                         WHERE id = ?
                     ");
 
-                    $horaCierre = $fechaEntrada." 23:59:59";
+                    $horaCierre =
+                        $fechaEntrada." 23:59:59";
 
                     $cerrar->bind_param(
                         "si",
@@ -157,10 +149,7 @@ class ChecadorController {
                 }
             }
 
-            // ======================================
-            // VALIDACIONES
-            // ======================================
-
+            // Validaciones
             if ($asistencia && $tipo == "entrada") {
                 $this->mensaje("Ya registraste entrada", "error");
             }
@@ -169,10 +158,7 @@ class ChecadorController {
                 $this->mensaje("Primero registra entrada", "error");
             }
 
-            // ======================================
-            // ENTRADA
-            // ======================================
-
+            // Entrada
             if ($tipo == "entrada") {
 
                 $estado = "puntual";
@@ -235,10 +221,7 @@ class ChecadorController {
                 );
             }
 
-            // ======================================
-            // SALIDA
-            // ======================================
-
+            // Salida
             if ($tipo == "salida") {
 
                 if ($horario) {
@@ -258,34 +241,22 @@ class ChecadorController {
 
                         echo "
                         <div style='text-align:center'>
-                        <h2>⚠️ Salida anticipada</h2>
+                            <h2>⚠️ Salida anticipada</h2>
 
-                        <form method='POST'>
+                            <form method='POST'>
 
-                        <input type='hidden'
-                        name='codigo'
-                        value='$codigo'>
+                                <input type='hidden' name='codigo' value='$codigo'>
+                                <input type='hidden' name='password' value='$password'>
+                                <input type='hidden' name='tipo' value='salida'>
+                                <input type='hidden' name='confirmar' value='1'>
 
-                        <input type='hidden'
-                        name='password'
-                        value='$password'>
+                                <button>
+                                    Confirmar salida
+                                </button>
 
-                        <input type='hidden'
-                        name='tipo'
-                        value='salida'>
+                            </form>
 
-                        <input type='hidden'
-                        name='confirmar'
-                        value='1'>
-
-                        <button>
-                        Confirmar salida
-                        </button>
-
-                        </form>
-
-                        </div>
-                        ";
+                        </div>";
 
                         exit();
                     }
@@ -326,15 +297,10 @@ class ChecadorController {
             session_start();
         }
 
-        $_SESSION["flash_mensaje"] =
-            $texto;
+        $_SESSION["flash_mensaje"] = $texto;
+        $_SESSION["flash_tipo"] = $tipo;
 
-        $_SESSION["flash_tipo"] =
-            $tipo;
-
-        header(
-            "Location: ?url=checador"
-        );
+        header("Location: ?url=checador");
 
         exit();
     }
@@ -349,37 +315,21 @@ class ChecadorController {
         $radio = 6371000;
 
         $dLat =
-            deg2rad(
-                $lat2 -
-                $lat1
-            );
+            deg2rad($lat2 - $lat1);
 
         $dLon =
-            deg2rad(
-                $lon2 -
-                $lon1
-            );
+            deg2rad($lon2 - $lon1);
 
         $a =
-            sin($dLat/2)
-            *
-            sin($dLat/2)
-            +
-            cos(
-                deg2rad($lat1)
-            )
-            *
-            cos(
-                deg2rad($lat2)
-            )
-            *
-            sin($dLon/2)
-            *
+            sin($dLat/2) *
+            sin($dLat/2) +
+            cos(deg2rad($lat1)) *
+            cos(deg2rad($lat2)) *
+            sin($dLon/2) *
             sin($dLon/2);
 
         $c =
-            2
-            *
+            2 *
             atan2(
                 sqrt($a),
                 sqrt(1-$a)
